@@ -30,10 +30,13 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     // Check if public profile is enabled
+    // Default to public if no settings exist (publicProfileEnabled defaults to true)
     const settings = user.settings[0];
-    if (!settings?.publicProfileEnabled) {
+    const isPublic = settings?.publicProfileEnabled ?? true;
+
+    if (!isPublic) {
       return NextResponse.json(
-        { error: 'This profile is not public' },
+        { error: 'This profile is private' },
         { status: 403 }
       );
     }
@@ -113,7 +116,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       languages: yearStats.languages,
       collaborators: yearStats.collaborators,
       achievements: achievements.map((ua) => ua.achievement),
-      themeVariant: settings.themeVariant,
+      themeVariant: settings?.themeVariant ?? 'nebula-blue',
     });
   } catch (error) {
     console.error('Error fetching public profile:', error);

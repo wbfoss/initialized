@@ -120,7 +120,7 @@ model ProfileSettings {
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId               String
   year                 Int
-  publicProfileEnabled Boolean  @default(false)
+  publicProfileEnabled Boolean  @default(true)
   includePrivateRepos  Boolean  @default(false)
   themeVariant         String   @default("nebula-blue")
   createdAt            DateTime @default(now())

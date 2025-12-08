@@ -36,10 +36,10 @@ export async function GET(request: Request) {
     });
 
     if (!settings) {
-      // Return defaults
+      // Return defaults - profiles are public by default
       return NextResponse.json({
         year,
-        publicProfileEnabled: false,
+        publicProfileEnabled: true,
         includePrivateRepos: false,
         themeVariant: 'nebula-blue',
       });
@@ -120,7 +120,7 @@ export async function POST(request: Request) {
       create: {
         userId: session.user.id,
         year,
-        publicProfileEnabled: publicProfileEnabled ?? false,
+        publicProfileEnabled: publicProfileEnabled ?? true,
         includePrivateRepos: includePrivateRepos ?? false,
         themeVariant: themeVariant ?? 'nebula-blue',
       },

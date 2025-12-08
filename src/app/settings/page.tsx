@@ -35,7 +35,7 @@ export default async function SettingsPage() {
         avatarUrl: user.avatarUrl,
       }}
       initialSettings={{
-        publicProfileEnabled: settings?.publicProfileEnabled ?? false,
+        publicProfileEnabled: settings?.publicProfileEnabled ?? true,
         includePrivateRepos: settings?.includePrivateRepos ?? false,
         themeVariant: settings?.themeVariant ?? 'nebula-blue',
       }}

@@ -123,9 +123,13 @@ export function SettingsClient({ user, initialSettings }: SettingsClientProps) {
               <div className="space-y-1">
                 <Label htmlFor="public-profile">Public Profile</Label>
                 <p className="text-sm text-zinc-400">
-                  Allow others to view your 2025 Year in Review at{' '}
+                  Your profile is viewable at{' '}
                   <span className="font-mono text-purple-400">
                     /u/{user.username}/2025
+                  </span>
+                  <br />
+                  <span className="text-xs text-zinc-500">
+                    Turn off to make your profile private
                   </span>
                 </p>
               </div>

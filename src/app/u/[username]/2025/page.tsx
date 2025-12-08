@@ -62,14 +62,17 @@ export default async function PublicProfile({ params }: PageProps) {
   }
 
   // Check if public profile is enabled
+  // Default to public if no settings exist (publicProfileEnabled defaults to true)
   const settings = user.settings[0];
-  if (!settings?.publicProfileEnabled) {
+  const isPublic = settings?.publicProfileEnabled ?? true;
+
+  if (!isPublic) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-black text-white">
         <div className="text-center">
           <h1 className="mb-4 text-4xl font-bold">Profile is Private</h1>
           <p className="text-zinc-400">
-            @{username} hasn&apos;t made their 2025 Year in Review public yet.
+            @{username} has made their 2025 Year in Review private.
           </p>
           <Link
             href="/"
@@ -168,7 +171,7 @@ export default async function PublicProfile({ params }: PageProps) {
         collaborators: yearStats.collaborators,
       }}
       achievements={achievements.map((ua) => ua.achievement)}
-      themeVariant={settings.themeVariant}
+      themeVariant={settings?.themeVariant ?? 'nebula-blue'}
     />
   );
 }
