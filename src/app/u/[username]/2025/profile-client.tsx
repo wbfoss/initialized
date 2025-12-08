@@ -25,6 +25,7 @@ import {
   Maximize,
   Share2,
   Check,
+  IdCard,
 } from 'lucide-react';
 
 const DashboardScene = dynamic(
@@ -530,6 +531,13 @@ export function PublicProfileClient({
 
               {/* Action buttons */}
               <div className="flex items-center gap-2">
+                <Link
+                  href={`/u/${user.username}/2025/id-card`}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#cc6666] hover:bg-[#cc6666]/80 text-black text-[10px] font-bold uppercase tracking-widest rounded-full transition-all cursor-pointer"
+                >
+                  <IdCard className="h-3 w-3" />
+                  ID CARD
+                </Link>
                 <button
                   onClick={copyShareLink}
                   className="flex items-center gap-2 px-4 py-2 bg-[#f59e0b] hover:bg-[#f59e0b]/80 text-black text-[10px] font-bold uppercase tracking-widest rounded-full transition-all cursor-pointer"

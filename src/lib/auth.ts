@@ -9,8 +9,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientSecret: process.env.AUTH_GITHUB_SECRET!,
       authorization: {
         params: {
-          // Note: read:org is optional - if user denies, we still proceed
-          scope: 'read:user user:email read:org',
+          // Only request essential scopes - read:org is fetched separately if needed
+          scope: 'read:user user:email',
         },
       },
     }),
@@ -40,18 +40,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: { githubId: String(githubProfile.id) },
         });
 
+        // Build update/create data - only include githubCreatedAt if we have it
+        const baseData = {
+          username: githubProfile.login,
+          name: githubProfile.name,
+          avatarUrl: githubProfile.avatar_url,
+          email: githubProfile.email,
+        };
+
+        // Try to include githubCreatedAt but don't fail if column doesn't exist
+        const dataWithCreatedAt = githubProfile.created_at
+          ? { ...baseData, githubCreatedAt: new Date(githubProfile.created_at) }
+          : baseData;
+
         if (existingUser) {
           // Update existing user
-          await prisma.user.update({
-            where: { githubId: String(githubProfile.id) },
-            data: {
-              username: githubProfile.login,
-              name: githubProfile.name,
-              avatarUrl: githubProfile.avatar_url,
-              email: githubProfile.email,
-              githubCreatedAt: githubProfile.created_at ? new Date(githubProfile.created_at) : undefined,
-            },
-          });
+          try {
+            await prisma.user.update({
+              where: { githubId: String(githubProfile.id) },
+              data: dataWithCreatedAt,
+            });
+          } catch (updateError) {
+            // If githubCreatedAt column doesn't exist, retry without it
+            console.warn('Update with githubCreatedAt failed, retrying without:', updateError);
+            await prisma.user.update({
+              where: { githubId: String(githubProfile.id) },
+              data: baseData,
+            });
+          }
         } else {
           // Check if username already exists (case-insensitive)
           const usernameExists = await prisma.user.findFirst({
@@ -63,29 +79,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
           });
 
-          if (usernameExists) {
-            // Username collision - append GitHub ID to make unique
-            await prisma.user.create({
-              data: {
-                githubId: String(githubProfile.id),
-                username: `${githubProfile.login}_${githubProfile.id}`,
-                name: githubProfile.name,
-                avatarUrl: githubProfile.avatar_url,
-                email: githubProfile.email,
-                githubCreatedAt: githubProfile.created_at ? new Date(githubProfile.created_at) : null,
-              },
-            });
-          } else {
-            await prisma.user.create({
-              data: {
-                githubId: String(githubProfile.id),
-                username: githubProfile.login,
-                name: githubProfile.name,
-                avatarUrl: githubProfile.avatar_url,
-                email: githubProfile.email,
-                githubCreatedAt: githubProfile.created_at ? new Date(githubProfile.created_at) : null,
-              },
-            });
+          const createData = usernameExists
+            ? { ...dataWithCreatedAt, githubId: String(githubProfile.id), username: `${githubProfile.login}_${githubProfile.id}` }
+            : { ...dataWithCreatedAt, githubId: String(githubProfile.id) };
+
+          try {
+            await prisma.user.create({ data: createData });
+          } catch (createError) {
+            // If githubCreatedAt column doesn't exist, retry without it
+            console.warn('Create with githubCreatedAt failed, retrying without:', createError);
+            const fallbackData = usernameExists
+              ? { ...baseData, githubId: String(githubProfile.id), username: `${githubProfile.login}_${githubProfile.id}` }
+              : { ...baseData, githubId: String(githubProfile.id) };
+            await prisma.user.create({ data: fallbackData });
           }
         }
 
