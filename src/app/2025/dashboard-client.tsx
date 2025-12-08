@@ -91,6 +91,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
   const [isMuted, setIsMuted] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const summary = yearStats?.summaryJson as SummaryStats | undefined;
   const needsRefresh = !yearStats;
@@ -100,6 +101,10 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
 
   useEffect(() => {
     setMounted(true);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const handleLogout = () => {
@@ -152,6 +157,25 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
 
   if (needsRefresh) {
     return <LcarsSetupScreen user={user} isRefreshing={isRefreshing} onRefresh={handleRefresh} stardate={stardate} />;
+  }
+
+  // Mobile Dashboard
+  if (isMobile) {
+    return (
+      <MobileDashboard
+        user={user}
+        summary={summary}
+        yearStats={yearStats}
+        achievements={achievements}
+        stardate={stardate}
+        shipRegistry={shipRegistry}
+        isRefreshing={isRefreshing}
+        copied={copied}
+        onRefresh={handleRefresh}
+        onCopyShareLink={copyShareLink}
+        onLogout={handleLogout}
+      />
+    );
   }
 
   return (
@@ -1149,5 +1173,329 @@ function LcarsButton({
     >
       {children}
     </button>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MOBILE DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════
+
+function MobileDashboard({
+  user,
+  summary,
+  yearStats,
+  achievements,
+  stardate,
+  shipRegistry,
+  isRefreshing,
+  copied,
+  onRefresh,
+  onCopyShareLink,
+  onLogout,
+}: {
+  user: { id: string; username: string; name: string | null; avatarUrl: string | null };
+  summary: SummaryStats | undefined;
+  yearStats: DashboardProps['yearStats'];
+  achievements: DashboardProps['achievements'];
+  stardate: string;
+  shipRegistry: string;
+  isRefreshing: boolean;
+  copied: boolean;
+  onRefresh: () => void;
+  onCopyShareLink: () => void;
+  onLogout: () => void;
+}) {
+  return (
+    <div className="min-h-screen bg-black font-mono">
+      {/* Scan line effect */}
+      <div
+        className="pointer-events-none fixed inset-0 z-50 opacity-[0.02]"
+        style={{
+          background: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,235,184,0.1) 2px, rgba(255,235,184,0.1) 4px)`
+        }}
+      />
+
+      {/* Fixed Header */}
+      <header className="sticky top-0 z-40 bg-black">
+        <div className="flex h-14">
+          <div className="w-20 bg-[#f59e0b] rounded-br-[30px] flex items-center justify-center">
+            <span className="text-black text-[10px] font-bold tracking-widest">LCARS</span>
+          </div>
+          <div className="flex-1 bg-gradient-to-r from-[#f59e0b] via-[#cc6666] to-[#9370db] flex items-center px-4">
+            <span className="text-black text-[10px] font-bold tracking-widest truncate">
+              USS {user.username.toUpperCase()}
+            </span>
+          </div>
+          <div className="w-16 bg-[#9370db] rounded-bl-[30px] flex items-center justify-center">
+            <span className="text-black text-[10px] font-bold">2025</span>
+          </div>
+        </div>
+        {/* Data bars */}
+        <div className="h-2 flex gap-[1px] px-1">
+          {[...Array(30)].map((_, i) => (
+            <div
+              key={i}
+              className="flex-1 rounded-sm"
+              style={{
+                backgroundColor: i % 5 === 0 ? '#9370db' : i % 5 === 1 ? '#f59e0b' : i % 5 === 2 ? '#cc6666' : i % 3 === 0 ? '#22d3ee' : '#f59e0b',
+                opacity: 0.3 + Math.sin(i * 0.3) * 0.4
+              }}
+            />
+          ))}
+        </div>
+      </header>
+
+      {/* Scrollable Content */}
+      <main className="px-4 pb-24 pt-4 space-y-4">
+        {/* Officer Card */}
+        <div className="bg-black/60 border-2 border-[#f59e0b]/40 rounded-lg overflow-hidden">
+          <div className="bg-[#f59e0b] px-3 py-1.5">
+            <span className="text-black text-[10px] font-bold tracking-widest">OFFICER PROFILE</span>
+          </div>
+          <div className="p-4 flex items-center gap-4">
+            <Avatar className="h-16 w-16 border-3 border-[#f59e0b]">
+              <AvatarImage src={user.avatarUrl || undefined} />
+              <AvatarFallback className="bg-[#f59e0b]/20 text-[#f59e0b] text-xl font-bold">
+                {user.username?.[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="text-[#f59e0b] font-bold truncate">{user.name || user.username}</div>
+              <div className="text-[#9370db] text-xs">@{user.username}</div>
+              <div className="text-[#cc6666] text-[10px] tracking-widest mt-1">{shipRegistry}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Big Number */}
+        <div className="text-center py-6">
+          <div className="text-6xl font-bold text-[#f59e0b] leading-none tabular-nums">
+            {(summary?.totalContributions || 0).toLocaleString()}
+          </div>
+          <div className="text-[#9370db] uppercase tracking-[0.3em] text-xs mt-2">
+            Total Contributions
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          <MobileStatCard icon={<GitCommit className="h-4 w-4" />} label="Commits" value={summary?.totalCommits || 0} color="#f59e0b" />
+          <MobileStatCard icon={<GitPullRequest className="h-4 w-4" />} label="Pull Requests" value={summary?.totalPRs || 0} color="#22d3ee" />
+          <MobileStatCard icon={<AlertCircle className="h-4 w-4" />} label="Issues" value={summary?.totalIssues || 0} color="#9370db" />
+          <MobileStatCard icon={<Flame className="h-4 w-4" />} label="Day Streak" value={summary?.longestStreak || 0} color="#cc6666" />
+          <MobileStatCard icon={<Star className="h-4 w-4" />} label="Stars Earned" value={summary?.totalStarsEarned || 0} color="#f59e0b" />
+          <MobileStatCard icon={<Trophy className="h-4 w-4" />} label="Achievements" value={achievements.length} color="#9370db" />
+        </div>
+
+        {/* Monthly Chart */}
+        <div className="bg-black/60 border-2 border-[#f59e0b]/30 rounded-lg overflow-hidden">
+          <div className="bg-[#9370db] px-3 py-1.5">
+            <span className="text-black text-[10px] font-bold tracking-widest">CONTRIBUTION ANALYSIS</span>
+          </div>
+          <div className="p-4">
+            <div className="flex items-end justify-between gap-1 h-20">
+              {(summary?.contributionsByMonth || Array(12).fill({ count: 0 })).map((m, i) => {
+                const maxCount = Math.max(...(summary?.contributionsByMonth?.map(x => x.count) || [1]));
+                const height = maxCount > 0 ? Math.max(10, (m.count / maxCount) * 100) : 10;
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className="w-full rounded-t transition-all duration-500"
+                      style={{
+                        height: `${height}%`,
+                        backgroundColor: i % 2 === 0 ? '#f59e0b' : '#9370db',
+                        opacity: 0.6 + (height / 200)
+                      }}
+                    />
+                    <span className="text-[7px] text-[#ffebb8]/40">
+                      {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][i]}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Languages */}
+        {yearStats?.languages && yearStats.languages.length > 0 && (
+          <div className="bg-black/60 border-2 border-[#cc6666]/30 rounded-lg overflow-hidden">
+            <div className="bg-[#cc6666] px-3 py-1.5">
+              <span className="text-black text-[10px] font-bold tracking-widest">LANGUAGE MATRIX</span>
+            </div>
+            <div className="p-3 space-y-2">
+              {yearStats.languages.slice(0, 5).map((lang, i) => (
+                <div key={lang.language} className="flex items-center gap-2">
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: lang.color || '#f59e0b' }}
+                  />
+                  <span className="text-[10px] text-[#ffebb8] flex-1 truncate uppercase tracking-wider">
+                    {lang.language}
+                  </span>
+                  <div className="w-20 h-2 bg-black/50 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-1000"
+                      style={{
+                        width: `${lang.contributionShare}%`,
+                        backgroundColor: lang.color || '#f59e0b',
+                        transitionDelay: `${i * 100}ms`
+                      }}
+                    />
+                  </div>
+                  <span className="text-[9px] text-[#9370db] w-8 text-right">
+                    {lang.contributionShare.toFixed(0)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Top Repos */}
+        {yearStats?.repos && yearStats.repos.length > 0 && (
+          <div className="bg-black/60 border-2 border-[#22d3ee]/30 rounded-lg overflow-hidden">
+            <div className="bg-[#22d3ee] px-3 py-1.5 flex items-center justify-between">
+              <span className="text-black text-[10px] font-bold tracking-widest">FLEET REGISTRY</span>
+              <span className="text-black/60 text-[9px] font-bold">{yearStats.repos.length}</span>
+            </div>
+            <div className="p-3 space-y-2">
+              {yearStats.repos.slice(0, 4).map((repo) => (
+                <div key={repo.fullName} className="p-2 bg-black/30 border border-[#22d3ee]/20 rounded">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-[#22d3ee] truncate flex-1 font-bold">
+                      {repo.fullName.split('/')[1]?.toUpperCase()}
+                    </span>
+                    <span className={`text-[8px] px-1.5 py-0.5 rounded ${
+                      repo.role === 'FLAGSHIP' ? 'bg-[#9370db]/30 text-[#9370db]' :
+                      repo.role === 'PATROL' ? 'bg-[#22d3ee]/30 text-[#22d3ee]' :
+                      'bg-[#f59e0b]/30 text-[#f59e0b]'
+                    }`}>
+                      {repo.role}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[9px] text-[#ffebb8]/60">
+                    <span className="flex items-center gap-1">
+                      <Star className="h-2.5 w-2.5" /> {repo.starsGained2025}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <GitCommit className="h-2.5 w-2.5" /> {repo.commitsByUser2025}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Achievements */}
+        {achievements.length > 0 && (
+          <div className="bg-black/60 border-2 border-[#9370db]/30 rounded-lg overflow-hidden">
+            <div className="bg-[#9370db] px-3 py-1.5 flex items-center justify-between">
+              <span className="text-black text-[10px] font-bold tracking-widest">COMMENDATIONS</span>
+              <span className="text-black/60 text-[9px] font-bold">{achievements.length}</span>
+            </div>
+            <div className="p-3 grid grid-cols-2 gap-2">
+              {achievements.slice(0, 6).map((a) => (
+                <div key={a.code} className="flex items-center gap-2 p-2 bg-[#9370db]/10 border border-[#9370db]/30 rounded">
+                  <Trophy className="h-3 w-3 text-[#f59e0b] flex-shrink-0" />
+                  <span className="text-[9px] text-[#ffebb8] truncate">{a.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Crew */}
+        {yearStats?.collaborators && yearStats.collaborators.length > 0 && (
+          <div className="bg-black/60 border-2 border-[#f59e0b]/30 rounded-lg overflow-hidden">
+            <div className="bg-[#f59e0b] px-3 py-1.5 flex items-center justify-between">
+              <span className="text-black text-[10px] font-bold tracking-widest">CREW MANIFEST</span>
+              <span className="text-black/60 text-[9px] font-bold">{yearStats.collaborators.length}</span>
+            </div>
+            <div className="p-3">
+              <div className="flex flex-wrap gap-1.5">
+                {yearStats.collaborators.slice(0, 10).map((collab) => (
+                  <Avatar
+                    key={collab.username}
+                    className="h-8 w-8 border-2 border-[#f59e0b]"
+                    title={`@${collab.username}`}
+                  >
+                    <AvatarImage src={collab.avatarUrl || undefined} />
+                    <AvatarFallback className="bg-[#f59e0b]/20 text-[#f59e0b] text-[10px]">
+                      {collab.username?.[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+                {yearStats.collaborators.length > 10 && (
+                  <div className="h-8 w-8 rounded-full border-2 border-[#f59e0b] bg-black flex items-center justify-center text-[9px] text-[#f59e0b]">
+                    +{yearStats.collaborators.length - 10}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Fixed Footer Actions */}
+      <footer className="fixed bottom-0 left-0 right-0 z-40 bg-black border-t-2 border-[#cc6666]">
+        <div className="flex items-center justify-center gap-2 p-3">
+          <button
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#22d3ee] text-black text-[10px] font-bold uppercase tracking-widest rounded-full disabled:opacity-50 cursor-pointer"
+          >
+            <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <button
+            onClick={onCopyShareLink}
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#f59e0b] text-black text-[10px] font-bold uppercase tracking-widest rounded-full cursor-pointer"
+          >
+            {copied ? <Check className="h-3 w-3" /> : <Share2 className="h-3 w-3" />}
+            {copied ? 'Copied' : 'Share'}
+          </button>
+          <button
+            onClick={() => window.location.href = '/settings'}
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#9370db] text-black text-[10px] font-bold uppercase tracking-widest rounded-full cursor-pointer"
+          >
+            <Settings className="h-3 w-3" />
+          </button>
+          <button
+            onClick={onLogout}
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#cc6666] text-black text-[10px] font-bold uppercase tracking-widest rounded-full cursor-pointer"
+          >
+            <LogOut className="h-3 w-3" />
+          </button>
+        </div>
+        {/* Bottom bar */}
+        <div className="flex h-8">
+          <div className="w-16 bg-[#cc6666] rounded-tr-[20px]" />
+          <div className="flex-1 bg-gradient-to-r from-[#cc6666] via-[#9370db] to-[#22d3ee] flex items-center justify-center">
+            <span className="text-black text-[8px] font-bold tracking-[0.15em]">
+              STARDATE {stardate}
+            </span>
+          </div>
+          <div className="w-16 bg-[#22d3ee] rounded-tl-[20px]" />
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function MobileStatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
+  return (
+    <div className="bg-black/60 border-2 rounded-lg p-3 text-center" style={{ borderColor: `${color}40` }}>
+      <div className="flex items-center justify-center gap-2 mb-1">
+        <div style={{ color }}>{icon}</div>
+        <div className="text-xl font-bold tabular-nums" style={{ color }}>
+          {value.toLocaleString()}
+        </div>
+      </div>
+      <div className="text-[8px] uppercase tracking-widest" style={{ color: `${color}99` }}>
+        {label}
+      </div>
+    </div>
   );
 }

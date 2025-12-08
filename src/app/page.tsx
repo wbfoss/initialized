@@ -22,9 +22,40 @@ export default function Home() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+  const [smoothCursorPos, setSmoothCursorPos] = useState({ x: 0, y: 0 });
   const [showRipple, setShowRipple] = useState(false);
   const [ripplePos, setRipplePos] = useState({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const animationFrameRef = useRef<number | null>(null);
+
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Smooth cursor interpolation
+  useEffect(() => {
+    if (isMobile) return;
+
+    const lerp = (start: number, end: number, factor: number) => start + (end - start) * factor;
+
+    const animate = () => {
+      setSmoothCursorPos(prev => ({
+        x: lerp(prev.x, cursorPos.x, 0.15),
+        y: lerp(prev.y, cursorPos.y, 0.15)
+      }));
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    };
+  }, [cursorPos, isMobile]);
 
   const stardate = `${new Date().getFullYear()}.${Math.floor((Date.now() % 31536000000) / 86400000).toString().padStart(3, '0')}`;
   const currentTime = new Date().toLocaleTimeString('en-US', { hour12: false });
@@ -105,6 +136,11 @@ export default function Home() {
     return <LcarsBootSequence bootPhase={bootPhase} bootMessages={bootMessages} />;
   }
 
+  // Mobile layout
+  if (isMobile) {
+    return <MobileHomePage stardate={stardate} />;
+  }
+
   return (
     <div
       ref={containerRef}
@@ -112,26 +148,33 @@ export default function Home() {
       onMouseMove={handleMouseMove}
       onClick={handleClick}
     >
-      {/* Custom cursor */}
+      {/* Custom cursor - smooth interpolated */}
       <div
-        className="pointer-events-none fixed z-[100] transition-transform duration-75"
+        className="pointer-events-none fixed z-[100]"
         style={{
-          left: cursorPos.x - 10,
-          top: cursorPos.y - 10,
-          transform: 'translate(0, 0)'
+          left: smoothCursorPos.x - 12,
+          top: smoothCursorPos.y - 12,
         }}
       >
-        <div className="w-5 h-5 border-2 border-cyan-400 rounded-full animate-pulse" />
-        <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-cyan-400 rounded-full -translate-x-1/2 -translate-y-1/2" />
+        <div className="w-6 h-6 border-2 border-cyan-400 rounded-full opacity-80" />
+        <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-cyan-400 rounded-full -translate-x-1/2 -translate-y-1/2" />
+        {/* Trailing effect */}
+        <div
+          className="absolute top-1/2 left-1/2 w-4 h-4 border border-cyan-400/30 rounded-full -translate-x-1/2 -translate-y-1/2"
+          style={{
+            transform: `translate(-50%, -50%) scale(${1 + Math.abs(cursorPos.x - smoothCursorPos.x) / 50})`
+          }}
+        />
       </div>
 
       {/* Click ripple effect */}
       {showRipple && (
         <div
-          className="pointer-events-none fixed z-[99] animate-ping"
-          style={{ left: ripplePos.x - 20, top: ripplePos.y - 20 }}
+          className="pointer-events-none fixed z-[99]"
+          style={{ left: ripplePos.x - 30, top: ripplePos.y - 30 }}
         >
-          <div className="w-10 h-10 border-2 border-amber-500 rounded-full opacity-50" />
+          <div className="w-15 h-15 border-2 border-amber-500 rounded-full animate-ping opacity-60" />
+          <div className="absolute inset-2 border border-cyan-400 rounded-full animate-ping opacity-40" style={{ animationDelay: '100ms' }} />
         </div>
       )}
 
@@ -920,6 +963,229 @@ function QuickStat({ icon, label, value, color }: { icon: React.ReactNode; label
         <div className="text-[9px] text-gray-500 tracking-wider">{label}</div>
         <div className={`text-lg font-bold ${colors[color]}`}>{value}</div>
       </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MOBILE HOME PAGE
+// ═══════════════════════════════════════════════════════════════════════════
+
+function MobileHomePage({ stardate }: { stardate: string }) {
+  return (
+    <div className="fixed inset-0 overflow-auto bg-black font-mono">
+      {/* Scan lines */}
+      <div
+        className="pointer-events-none fixed inset-0 z-50 opacity-[0.02]"
+        style={{
+          background: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,255,0.1) 2px, rgba(0,255,255,0.1) 4px)`
+        }}
+      />
+
+      {/* Starfield background */}
+      <div className="fixed inset-0 overflow-hidden opacity-30">
+        <div className="stars" />
+      </div>
+
+      {/* Top LCARS bar */}
+      <div className="sticky top-0 z-30 flex h-14">
+        <div className="w-20 bg-amber-500 rounded-br-[30px] flex items-center justify-end pr-3">
+          <span className="text-black text-[10px] font-bold">LCARS</span>
+        </div>
+        <div className="flex-1 bg-gradient-to-r from-amber-500 to-cyan-500 flex items-center justify-center">
+          <span className="text-black text-[10px] font-bold tracking-widest">INITIALIZED.DEV</span>
+        </div>
+        <div className="w-20 bg-cyan-500 rounded-bl-[30px] flex items-center pl-3">
+          <span className="text-black text-[10px] font-bold">2025</span>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="relative z-10 px-4 py-6">
+        {/* Status bar */}
+        <div className="flex justify-between items-center mb-6 text-[9px]">
+          <span className="text-amber-500/60">STARDATE {stardate}</span>
+          <span className="text-cyan-400/60 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            ONLINE
+          </span>
+        </div>
+
+        {/* Hero Section */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center gap-1 mb-4">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"
+                style={{ animationDelay: `${i * 150}ms` }}
+              />
+            ))}
+          </div>
+
+          <h1 className="text-4xl font-bold mb-2">
+            <span className="text-amber-500">initialized</span>
+            <span className="text-cyan-400">.dev</span>
+          </h1>
+
+          <p className="text-cyan-400/70 text-xs mb-1">GITHUB YEAR IN REVIEW 2025</p>
+          <p className="text-amber-500/50 text-[10px] tracking-wider mb-6">
+            YOUR CONTRIBUTIONS AS A GALACTIC MAP
+          </p>
+
+          {/* Sign in button */}
+          <button
+            onClick={() => signIn('github')}
+            className="w-full max-w-xs mx-auto px-8 py-4 bg-amber-500 hover:bg-amber-400 text-black font-bold uppercase tracking-widest rounded-r-full rounded-l-lg transition-all cursor-pointer flex items-center justify-center gap-3"
+          >
+            <Github className="h-5 w-5" />
+            <span>Sign in with GitHub</span>
+          </button>
+        </div>
+
+        {/* Status indicators */}
+        <div className="grid grid-cols-3 gap-2 mb-6">
+          <MobileStatusCard label="SYSTEMS" status="ONLINE" color="green" />
+          <MobileStatusCard label="DATABASE" status="READY" color="cyan" />
+          <MobileStatusCard label="SHIELDS" status="ACTIVE" color="amber" />
+        </div>
+
+        {/* Features */}
+        <div className="bg-black/60 border border-amber-500/30 rounded-lg overflow-hidden mb-6">
+          <div className="bg-amber-500 px-3 py-2">
+            <span className="text-black text-[10px] font-bold tracking-widest">MISSION BRIEFING</span>
+          </div>
+          <div className="p-3 space-y-3">
+            <MobileFeatureRow icon={<Github className="w-4 h-4" />} title="CONNECT" desc="Link your GitHub account" />
+            <MobileFeatureRow icon={<Star className="w-4 h-4" />} title="GENERATE" desc="Create 3D visualization" />
+            <MobileFeatureRow icon={<Users className="w-4 h-4" />} title="SHARE" desc="Share your stats" />
+            <MobileFeatureRow icon={<Rocket className="w-4 h-4" />} title="ACHIEVE" desc="Unlock achievements" />
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <MobileStatCard icon={<Users className="w-4 h-4" />} label="DEVELOPERS" value="10K+" />
+          <MobileStatCard icon={<Star className="w-4 h-4" />} label="STARS" value="1M+" />
+          <MobileStatCard icon={<Activity className="w-4 h-4" />} label="COMMITS" value="50M+" />
+          <MobileStatCard icon={<Globe className="w-4 h-4" />} label="SECTORS" value="195" />
+        </div>
+
+        {/* Power bars animation */}
+        <div className="bg-black/60 border border-cyan-400/30 rounded-lg overflow-hidden mb-6">
+          <div className="bg-cyan-500 px-3 py-2">
+            <span className="text-black text-[10px] font-bold tracking-widest">SYSTEM STATUS</span>
+          </div>
+          <div className="p-3">
+            <MobilePowerBars />
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div className="sticky bottom-0 z-30 flex h-12">
+        <div className="w-16 bg-amber-600 rounded-tr-[25px]" />
+        <div className="flex-1 bg-gradient-to-r from-amber-600 to-cyan-600 flex items-center justify-center">
+          <a
+            href="https://github.com/wbfoss/initialized"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-black text-[9px] font-bold flex items-center gap-2"
+          >
+            <Github className="w-3 h-3" />
+            OPEN SOURCE
+          </a>
+        </div>
+        <div className="w-16 bg-cyan-600 rounded-tl-[25px]" />
+      </div>
+
+      <style jsx>{`
+        .stars {
+          position: absolute;
+          width: 200%;
+          height: 200%;
+          background-image:
+            radial-gradient(2px 2px at 20px 30px, white, transparent),
+            radial-gradient(2px 2px at 40px 70px, white, transparent),
+            radial-gradient(1px 1px at 90px 40px, white, transparent),
+            radial-gradient(2px 2px at 160px 120px, white, transparent);
+          background-size: 200px 200px;
+          animation: twinkle 5s ease-in-out infinite;
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.6; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function MobileStatusCard({ label, status, color }: { label: string; status: string; color: string }) {
+  const colors: Record<string, string> = {
+    green: 'bg-green-400',
+    cyan: 'bg-cyan-400',
+    amber: 'bg-amber-500',
+  };
+
+  return (
+    <div className="bg-black/60 border border-amber-500/20 rounded p-2 text-center">
+      <div className="flex items-center justify-center gap-1 mb-1">
+        <span className={`w-1.5 h-1.5 rounded-full ${colors[color]} animate-pulse`} />
+        <span className="text-[8px] text-gray-500">{label}</span>
+      </div>
+      <span className={`text-[10px] font-bold ${color === 'green' ? 'text-green-400' : color === 'cyan' ? 'text-cyan-400' : 'text-amber-500'}`}>
+        {status}
+      </span>
+    </div>
+  );
+}
+
+function MobileFeatureRow({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="text-amber-500">{icon}</div>
+      <div>
+        <div className="text-[10px] text-cyan-400 font-bold">{title}</div>
+        <div className="text-[9px] text-gray-500">{desc}</div>
+      </div>
+    </div>
+  );
+}
+
+function MobileStatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="bg-black/60 border border-cyan-400/20 rounded p-3 text-center">
+      <div className="text-cyan-400 mb-1 flex justify-center">{icon}</div>
+      <div className="text-lg font-bold text-amber-500">{value}</div>
+      <div className="text-[8px] text-gray-500">{label}</div>
+    </div>
+  );
+}
+
+function MobilePowerBars() {
+  const systems = ['WARP', 'SHIELD', 'SENSOR', 'COMM'];
+  const values = [85, 95, 70, 100];
+
+  return (
+    <div className="space-y-2">
+      {systems.map((sys, i) => (
+        <div key={sys} className="flex items-center gap-2">
+          <span className="text-[9px] text-amber-500/70 w-14">{sys}</span>
+          <div className="flex-1 flex gap-[2px]">
+            {[...Array(10)].map((_, j) => (
+              <div
+                key={j}
+                className={`flex-1 h-2 rounded-sm ${
+                  j < values[i] / 10 ? (i % 2 === 0 ? 'bg-cyan-400' : 'bg-amber-500') : 'bg-gray-700'
+                }`}
+                style={{ opacity: j < values[i] / 10 ? 0.5 + (j / 20) : 0.2 }}
+              />
+            ))}
+          </div>
+          <span className="text-[10px] text-cyan-400 w-8 text-right">{values[i]}%</span>
+        </div>
+      ))}
     </div>
   );
 }
