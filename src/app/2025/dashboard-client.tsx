@@ -24,7 +24,9 @@ import {
   Cpu,
   Shield,
   Globe,
+  IdCard,
 } from 'lucide-react';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
 const DashboardScene = dynamic(
@@ -591,6 +593,14 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
                   {copied ? <Check className="h-3 w-3" /> : <Share2 className="h-3 w-3" />}
                   <span className="hidden sm:inline">{copied ? 'COPIED' : 'SHARE'}</span>
                 </LcarsButton>
+                <Link
+                  href={`/u/${user.username}/2025/id-card`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#cc6666] text-black text-[10px] font-bold uppercase tracking-widest rounded-full transition-all hover:opacity-80"
+                  title="ID Card"
+                >
+                  <IdCard className="h-3 w-3" />
+                  <span className="hidden sm:inline">ID CARD</span>
+                </Link>
                 <LcarsButton onClick={toggleFullscreen} color="#9370db" title="Fullscreen">
                   <Maximize className="h-3 w-3" />
                 </LcarsButton>
@@ -1456,6 +1466,12 @@ function MobileDashboard({
             {copied ? <Check className="h-3 w-3" /> : <Share2 className="h-3 w-3" />}
             {copied ? 'Copied' : 'Share'}
           </button>
+          <Link
+            href={`/u/${user.username}/2025/id-card`}
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#cc6666] text-black text-[10px] font-bold uppercase tracking-widest rounded-full"
+          >
+            <IdCard className="h-3 w-3" />
+          </Link>
           <button
             onClick={() => window.location.href = '/settings'}
             className="flex items-center gap-1.5 px-3 py-2 bg-[#9370db] text-black text-[10px] font-bold uppercase tracking-widest rounded-full cursor-pointer"
@@ -1464,7 +1480,7 @@ function MobileDashboard({
           </button>
           <button
             onClick={onLogout}
-            className="flex items-center gap-1.5 px-3 py-2 bg-[#cc6666] text-black text-[10px] font-bold uppercase tracking-widest rounded-full cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#ef4444] text-black text-[10px] font-bold uppercase tracking-widest rounded-full cursor-pointer"
           >
             <LogOut className="h-3 w-3" />
           </button>
