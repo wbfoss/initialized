@@ -15,13 +15,9 @@ import {
   Share2,
   RefreshCw,
   LogOut,
-  Copy,
   Check,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
-  ChevronDown,
-  Cpu,
   Radio,
   Zap,
 } from 'lucide-react';
@@ -87,7 +83,6 @@ interface SummaryStats {
 export function DashboardClient({ user, yearStats, achievements, settings }: DashboardProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
-  const [bottomPanelOpen, setBottomPanelOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const summary = yearStats?.summaryJson as SummaryStats | undefined;
@@ -325,62 +320,52 @@ export function DashboardClient({ user, yearStats, achievements, settings }: Das
             </div>
           </div>
 
-          {/* BOTTOM PANEL - Crew & Actions */}
-          <div className={`absolute bottom-0 left-28 right-28 z-20 transition-transform duration-300 ${bottomPanelOpen ? 'translate-y-0' : 'translate-y-[calc(100%-3rem)]'}`}>
-            <div className="flex flex-col">
-              {/* Toggle Button */}
-              <button
-                onClick={() => setBottomPanelOpen(!bottomPanelOpen)}
-                className="w-24 h-12 self-center bg-amber-600 hover:bg-amber-500 flex items-center justify-center rounded-t-lg transition-colors"
-              >
-                {bottomPanelOpen ? <ChevronDown className="h-6 w-6 text-black" /> : <ChevronUp className="h-6 w-6 text-black" />}
-              </button>
-
-              <div className="bg-black/90 border-t-4 border-amber-600 backdrop-blur-md">
-                <div className="flex items-center justify-between p-4">
-                  {/* Crew Section */}
-                  <div className="flex items-center gap-4">
-                    <p className="font-mono text-[10px] text-amber-500 uppercase tracking-widest">Crew Manifest</p>
-                    <div className="flex -space-x-2">
-                      {yearStats?.collaborators.slice(0, 8).map((collab) => (
-                        <Avatar
-                          key={collab.username}
-                          className="h-10 w-10 border-2 border-amber-500 ring-2 ring-black"
-                          title={`@${collab.username}`}
-                        >
-                          <AvatarImage src={collab.avatarUrl || undefined} />
-                          <AvatarFallback className="bg-amber-500/20 text-amber-500 font-mono text-xs">
-                            {collab.username?.[0]?.toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                      {(yearStats?.collaborators.length || 0) > 8 && (
-                        <div className="h-10 w-10 rounded-full border-2 border-amber-500 bg-black flex items-center justify-center font-mono text-xs text-amber-500">
-                          +{(yearStats?.collaborators.length || 0) - 8}
-                        </div>
-                      )}
-                    </div>
+          {/* BOTTOM PANEL - Crew & Actions (Always Visible) */}
+          <div className="absolute bottom-0 left-72 right-8 z-20">
+            <div className="bg-black/80 border-t-4 border-amber-600 backdrop-blur-md rounded-t-lg">
+              <div className="flex items-center justify-between px-4 py-3">
+                {/* Crew Section */}
+                <div className="flex items-center gap-4">
+                  <p className="font-mono text-[10px] text-amber-500 uppercase tracking-widest">Crew Manifest</p>
+                  <div className="flex -space-x-2">
+                    {yearStats?.collaborators.slice(0, 8).map((collab) => (
+                      <Avatar
+                        key={collab.username}
+                        className="h-9 w-9 border-2 border-amber-500 ring-2 ring-black"
+                        title={`@${collab.username}`}
+                      >
+                        <AvatarImage src={collab.avatarUrl || undefined} />
+                        <AvatarFallback className="bg-amber-500/20 text-amber-500 font-mono text-xs">
+                          {collab.username?.[0]?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
+                    {(yearStats?.collaborators.length || 0) > 8 && (
+                      <div className="h-9 w-9 rounded-full border-2 border-amber-500 bg-black flex items-center justify-center font-mono text-xs text-amber-500">
+                        +{(yearStats?.collaborators.length || 0) - 8}
+                      </div>
+                    )}
                   </div>
+                </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-2">
-                    <LcarsButton onClick={handleRefresh} disabled={isRefreshing} color="sky">
-                      <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                      <span>Refresh</span>
-                    </LcarsButton>
-                    <LcarsButton onClick={copyShareLink} color="amber">
-                      {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-                      <span>Share</span>
-                    </LcarsButton>
-                    <LcarsButton onClick={() => window.location.href = '/settings'} color="amber">
-                      <Settings className="h-4 w-4" />
-                      <span>Config</span>
-                    </LcarsButton>
-                    <LcarsButton onClick={() => signOut({ callbackUrl: '/' })} color="orange">
-                      <LogOut className="h-4 w-4" />
-                      <span>Logout</span>
-                    </LcarsButton>
-                  </div>
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2">
+                  <LcarsButton onClick={handleRefresh} disabled={isRefreshing} color="sky">
+                    <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span>Refresh</span>
+                  </LcarsButton>
+                  <LcarsButton onClick={copyShareLink} color="amber">
+                    {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+                    <span>Share</span>
+                  </LcarsButton>
+                  <LcarsButton onClick={() => window.location.href = '/settings'} color="amber">
+                    <Settings className="h-4 w-4" />
+                    <span>Config</span>
+                  </LcarsButton>
+                  <LcarsButton onClick={() => signOut({ callbackUrl: '/' })} color="orange">
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </LcarsButton>
                 </div>
               </div>
             </div>
