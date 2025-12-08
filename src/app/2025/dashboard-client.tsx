@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -200,10 +199,10 @@ export function DashboardClient({ user, yearStats, achievements, settings }: Das
       </header>
 
       {/* Main content */}
-      <main className="relative z-10 mx-auto max-w-7xl px-4 py-8">
+      <main className="relative z-10">
         {needsRefresh ? (
-          <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-            <div className="mb-8 rounded-full bg-purple-500/20 p-6">
+          <div className="flex min-h-[80vh] flex-col items-center justify-center text-center px-4">
+            <div className="mb-8 rounded-full bg-purple-500/20 p-6 backdrop-blur-md">
               <RefreshCw className="h-12 w-12 text-purple-400" />
             </div>
             <h2 className="mb-2 text-2xl font-semibold">Welcome, {user.name || user.username}!</h2>
@@ -231,183 +230,137 @@ export function DashboardClient({ user, yearStats, achievements, settings }: Das
             </Button>
           </div>
         ) : (
-          <div className="space-y-8">
-            {/* Overview Section */}
-            <section>
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-semibold">Command Bridge</h2>
-                  <p className="text-zinc-400">Your 2025 at a glance</p>
+          <>
+            {/* Hero section - Let 3D breathe */}
+            <div className="h-[60vh] flex items-end justify-center pb-8">
+              <div className="text-center">
+                <p className="text-zinc-400 mb-2">Your 2025 Journey</p>
+                <div className="flex items-center justify-center gap-8">
+                  <div className="text-center">
+                    <p className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                      <AnimatedCounter value={summary?.totalContributions || 0} />
+                    </p>
+                    <p className="text-sm text-zinc-500">Contributions</p>
+                  </div>
+                  <div className="h-12 w-px bg-zinc-700" />
+                  <div className="text-center">
+                    <p className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                      <AnimatedCounter value={summary?.longestStreak || 0} />
+                    </p>
+                    <p className="text-sm text-zinc-500">Day Streak</p>
+                  </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
-                  className="gap-2 border-zinc-700 bg-transparent hover:bg-zinc-800"
-                >
-                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  Refresh
-                </Button>
+                <p className="mt-4 text-xs text-zinc-600">Scroll down for details</p>
               </div>
+            </div>
 
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                  icon={<GitCommit className="h-5 w-5 text-blue-400" />}
-                  label="Contributions"
-                  value={summary?.totalContributions || 0}
-                  color="blue"
-                />
-                <StatCard
-                  icon={<GitPullRequest className="h-5 w-5 text-green-400" />}
-                  label="Pull Requests"
-                  value={summary?.totalPRs || 0}
-                  color="green"
-                />
-                <StatCard
-                  icon={<AlertCircle className="h-5 w-5 text-yellow-400" />}
-                  label="Issues"
-                  value={summary?.totalIssues || 0}
-                  color="yellow"
-                />
-                <StatCard
-                  icon={<Flame className="h-5 w-5 text-orange-400" />}
-                  label="Longest Streak"
-                  value={summary?.longestStreak || 0}
-                  suffix=" days"
-                  color="orange"
-                />
-              </div>
-            </section>
+            {/* Stats Panel - Compact bottom section */}
+            <div className="bg-gradient-to-t from-black via-black/95 to-transparent pt-16 pb-8">
+              <div className="mx-auto max-w-6xl px-4 space-y-8">
 
-            {/* Repositories Section */}
-            <section>
-              <div className="mb-6">
-                <h2 className="text-2xl font-semibold">Fleet View</h2>
-                <p className="text-zinc-400">Your top repositories</p>
-              </div>
+                {/* Quick Stats Row */}
+                <div className="flex flex-wrap justify-center gap-3">
+                  <StatPill icon={<GitCommit className="h-4 w-4" />} label="Commits" value={summary?.totalCommits || 0} />
+                  <StatPill icon={<GitPullRequest className="h-4 w-4" />} label="PRs" value={summary?.totalPRs || 0} />
+                  <StatPill icon={<AlertCircle className="h-4 w-4" />} label="Issues" value={summary?.totalIssues || 0} />
+                  <StatPill icon={<Star className="h-4 w-4" />} label="Stars" value={summary?.totalStarsEarned || 0} />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    className="gap-1 text-zinc-500 hover:text-white"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
 
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {yearStats?.repos.slice(0, 6).map((repo) => (
-                  <Card key={repo.fullName} className="border-zinc-800/50 bg-black/40 backdrop-blur-md">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between">
-                        <CardTitle className="text-sm font-medium text-zinc-200">
-                          {repo.fullName}
-                        </CardTitle>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs ${
-                            repo.role === 'FLAGSHIP'
-                              ? 'bg-purple-500/20 text-purple-400'
-                              : repo.role === 'PATROL'
-                                ? 'bg-blue-500/20 text-blue-400'
-                                : 'bg-zinc-500/20 text-zinc-400'
-                          }`}
-                        >
-                          {repo.role}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="mb-3 line-clamp-2 text-sm text-zinc-400">
-                        {repo.description || 'No description'}
-                      </p>
-                      <div className="flex items-center gap-4 text-sm text-zinc-500">
-                        <span className="flex items-center gap-1">
-                          <Star className="h-4 w-4" />
-                          {repo.starsGained2025}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <GitCommit className="h-4 w-4" />
-                          {repo.commitsByUser2025}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </section>
-
-            {/* Languages Section */}
-            <section>
-              <div className="mb-6">
-                <h2 className="text-2xl font-semibold">Nebula Map</h2>
-                <p className="text-zinc-400">Languages you&apos;ve used</p>
-              </div>
-
-              <Card className="border-zinc-800/50 bg-black/40 backdrop-blur-md">
-                <CardContent className="pt-6">
-                  <div className="flex flex-wrap gap-3">
-                    {yearStats?.languages.map((lang) => (
+                {/* Languages - Inline pills */}
+                {yearStats?.languages && yearStats.languages.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {yearStats.languages.slice(0, 8).map((lang) => (
                       <div
                         key={lang.language}
-                        className="flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-800/50 px-4 py-2"
+                        className="flex items-center gap-1.5 rounded-full border border-zinc-800 bg-black/60 px-3 py-1 text-xs backdrop-blur-sm"
                       >
                         <div
-                          className="h-3 w-3 rounded-full"
+                          className="h-2 w-2 rounded-full"
                           style={{ backgroundColor: lang.color || '#6b7280' }}
                         />
-                        <span className="text-sm font-medium text-zinc-200">{lang.language}</span>
-                        <span className="text-xs text-zinc-500">
-                          {lang.contributionShare.toFixed(1)}%
-                        </span>
+                        <span className="text-zinc-300">{lang.language}</span>
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            </section>
+                )}
 
-            {/* Collaborators Section */}
-            <section>
-              <div className="mb-6">
-                <h2 className="text-2xl font-semibold">Squadron</h2>
-                <p className="text-zinc-400">Developers you&apos;ve collaborated with</p>
-              </div>
-
-              <div className="flex flex-wrap gap-4">
-                {yearStats?.collaborators.slice(0, 10).map((collab) => (
-                  <div key={collab.username} className="flex flex-col items-center gap-2">
-                    <Avatar className="h-12 w-12 border-2 border-zinc-700">
-                      <AvatarImage src={collab.avatarUrl || undefined} />
-                      <AvatarFallback>{collab.username?.[0]?.toUpperCase() || '?'}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs text-zinc-400">@{collab.username}</span>
+                {/* Achievements - Compact row */}
+                {achievements.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {achievements.slice(0, 6).map((achievement) => (
+                      <div
+                        key={achievement.code}
+                        className="flex items-center gap-2 rounded-full border border-yellow-800/50 bg-yellow-500/10 px-3 py-1.5 backdrop-blur-sm"
+                        title={achievement.description}
+                      >
+                        <Trophy className="h-3 w-3 text-yellow-500" />
+                        <span className="text-xs text-yellow-300">{achievement.name}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </section>
+                )}
 
-            {/* Achievements Section */}
-            <section>
-              <div className="mb-6">
-                <h2 className="text-2xl font-semibold">Holographic Hall</h2>
-                <p className="text-zinc-400">Achievements unlocked</p>
-              </div>
+                {/* Top Repos - Minimal cards */}
+                {yearStats?.repos && yearStats.repos.length > 0 && (
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {yearStats.repos.slice(0, 3).map((repo) => (
+                      <div
+                        key={repo.fullName}
+                        className="rounded-lg border border-zinc-800/50 bg-black/40 p-3 backdrop-blur-sm"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-zinc-200 truncate">
+                            {repo.fullName.split('/')[1]}
+                          </span>
+                          <span className="text-xs text-purple-400">{repo.role}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-zinc-500">
+                          <span className="flex items-center gap-1">
+                            <Star className="h-3 w-3" /> {repo.starsGained2025}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <GitCommit className="h-3 w-3" /> {repo.commitsByUser2025}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {achievements.map((achievement) => (
-                  <Card
-                    key={achievement.code}
-                    className="border-zinc-800/50 bg-black/40 backdrop-blur-md"
-                  >
-                    <CardContent className="flex items-center gap-4 p-4">
-                      <div className="rounded-full bg-yellow-500/20 p-3">
-                        <Trophy className="h-6 w-6 text-yellow-400" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-zinc-200">{achievement.name}</p>
-                        <p className="text-xs text-zinc-500">{achievement.description}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                {achievements.length === 0 && (
-                  <p className="text-zinc-500">Complete more activities to unlock achievements!</p>
+                {/* Collaborators - Avatar row */}
+                {yearStats?.collaborators && yearStats.collaborators.length > 0 && (
+                  <div className="flex justify-center">
+                    <div className="flex -space-x-2">
+                      {yearStats.collaborators.slice(0, 8).map((collab) => (
+                        <Avatar
+                          key={collab.username}
+                          className="h-8 w-8 border-2 border-black ring-1 ring-zinc-800"
+                          title={`@${collab.username}`}
+                        >
+                          <AvatarImage src={collab.avatarUrl || undefined} />
+                          <AvatarFallback className="text-xs bg-zinc-800">{collab.username?.[0]?.toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                      ))}
+                      {yearStats.collaborators.length > 8 && (
+                        <div className="h-8 w-8 rounded-full border-2 border-black bg-zinc-800 flex items-center justify-center text-xs text-zinc-400">
+                          +{yearStats.collaborators.length - 8}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
-            </section>
-          </div>
+            </div>
+          </>
         )}
       </main>
 
@@ -539,43 +492,20 @@ export function DashboardClient({ user, yearStats, achievements, settings }: Das
   );
 }
 
-// Tailwind requires static class names - dynamic classes won't be compiled
-const COLOR_BG_CLASSES: Record<string, string> = {
-  blue: 'bg-blue-500/20',
-  green: 'bg-green-500/20',
-  yellow: 'bg-yellow-500/20',
-  orange: 'bg-orange-500/20',
-  purple: 'bg-purple-500/20',
-  pink: 'bg-pink-500/20',
-  red: 'bg-red-500/20',
-};
-
-function StatCard({
+function StatPill({
   icon,
   label,
   value,
-  suffix = '',
-  color,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
-  suffix?: string;
-  color: string;
 }) {
-  const bgClass = COLOR_BG_CLASSES[color] || 'bg-zinc-500/20';
-
   return (
-    <Card className="border-zinc-800/50 bg-black/40 backdrop-blur-md transition-transform hover:scale-[1.02]">
-      <CardContent className="flex items-center gap-4 p-6">
-        <div className={`rounded-full ${bgClass} p-3`}>{icon}</div>
-        <div>
-          <p className="text-2xl font-bold text-zinc-100">
-            <AnimatedCounter value={value} suffix={suffix} />
-          </p>
-          <p className="text-sm text-zinc-500">{label}</p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-2 rounded-full border border-zinc-800 bg-black/60 px-4 py-2 backdrop-blur-sm">
+      <span className="text-zinc-500">{icon}</span>
+      <span className="text-sm font-medium text-zinc-200">{value.toLocaleString()}</span>
+      <span className="text-xs text-zinc-500">{label}</span>
+    </div>
   );
 }
