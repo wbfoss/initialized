@@ -9,14 +9,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientSecret: process.env.AUTH_GITHUB_SECRET!,
       authorization: {
         params: {
+          // Note: read:org is optional - if user denies, we still proceed
           scope: 'read:user user:email read:org',
         },
       },
     }),
   ],
+  debug: process.env.NODE_ENV === 'development',
   callbacks: {
     async signIn({ account, profile }) {
-      if (!account || !profile) return false;
+      if (!account || !profile) {
+        console.error('SignIn failed: Missing account or profile');
+        return false;
+      }
 
       const githubProfile = profile as unknown as {
         id: number;
@@ -27,25 +32,62 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         created_at?: string;
       };
 
+      console.log('SignIn attempt for:', githubProfile.login);
+
       try {
-        await prisma.user.upsert({
+        // First, try to find existing user by githubId
+        const existingUser = await prisma.user.findUnique({
           where: { githubId: String(githubProfile.id) },
-          update: {
-            username: githubProfile.login,
-            name: githubProfile.name,
-            avatarUrl: githubProfile.avatar_url,
-            email: githubProfile.email,
-            githubCreatedAt: githubProfile.created_at ? new Date(githubProfile.created_at) : undefined,
-          },
-          create: {
-            githubId: String(githubProfile.id),
-            username: githubProfile.login,
-            name: githubProfile.name,
-            avatarUrl: githubProfile.avatar_url,
-            email: githubProfile.email,
-            githubCreatedAt: githubProfile.created_at ? new Date(githubProfile.created_at) : null,
-          },
         });
+
+        if (existingUser) {
+          // Update existing user
+          await prisma.user.update({
+            where: { githubId: String(githubProfile.id) },
+            data: {
+              username: githubProfile.login,
+              name: githubProfile.name,
+              avatarUrl: githubProfile.avatar_url,
+              email: githubProfile.email,
+              githubCreatedAt: githubProfile.created_at ? new Date(githubProfile.created_at) : undefined,
+            },
+          });
+        } else {
+          // Check if username already exists (case-insensitive)
+          const usernameExists = await prisma.user.findFirst({
+            where: {
+              username: {
+                equals: githubProfile.login,
+                mode: 'insensitive',
+              },
+            },
+          });
+
+          if (usernameExists) {
+            // Username collision - append GitHub ID to make unique
+            await prisma.user.create({
+              data: {
+                githubId: String(githubProfile.id),
+                username: `${githubProfile.login}_${githubProfile.id}`,
+                name: githubProfile.name,
+                avatarUrl: githubProfile.avatar_url,
+                email: githubProfile.email,
+                githubCreatedAt: githubProfile.created_at ? new Date(githubProfile.created_at) : null,
+              },
+            });
+          } else {
+            await prisma.user.create({
+              data: {
+                githubId: String(githubProfile.id),
+                username: githubProfile.login,
+                name: githubProfile.name,
+                avatarUrl: githubProfile.avatar_url,
+                email: githubProfile.email,
+                githubCreatedAt: githubProfile.created_at ? new Date(githubProfile.created_at) : null,
+              },
+            });
+          }
+        }
 
         const dbUser = await prisma.user.findUnique({
           where: { githubId: String(githubProfile.id) },
@@ -79,9 +121,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
         }
 
+        console.log('SignIn successful for:', githubProfile.login);
         return true;
       } catch (error) {
-        console.error('Error during sign in:', error);
+        console.error('Error during sign in for', githubProfile.login, ':', error);
+        // Log the full error for debugging
+        if (error instanceof Error) {
+          console.error('Error message:', error.message);
+          console.error('Error stack:', error.stack);
+        }
         return false;
       }
     },
@@ -106,5 +154,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   pages: {
     signIn: '/',
+    error: '/auth/error',
   },
 });
