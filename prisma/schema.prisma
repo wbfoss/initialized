@@ -1,0 +1,140 @@
+// Prisma schema for initialized.dev
+// GitHub Year-in-Review 2025
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  githubId  String   @unique
+  username  String   @unique
+  name      String?
+  avatarUrl String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts     OAuthAccount[]
+  yearStats    YearStats[]
+  achievements UserAchievement[]
+  settings     ProfileSettings[]
+  events       AnalyticsEvent[]
+}
+
+model OAuthAccount {
+  id                String    @id @default(cuid())
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String
+  provider          String
+  providerAccountId String
+  accessToken       String
+  refreshToken      String?
+  expiresAt         DateTime?
+
+  @@unique([provider, providerAccountId])
+}
+
+model YearStats {
+  id            String   @id @default(cuid())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  year          Int
+  summaryJson   Json
+  lastFetchedAt DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  repos         RepoStats[]
+  languages     LanguageStats[]
+  collaborators CollaboratorStats[]
+
+  @@unique([userId, year])
+  @@index([userId])
+}
+
+model RepoStats {
+  id                String    @id @default(cuid())
+  yearStats         YearStats @relation(fields: [yearStatsId], references: [id], onDelete: Cascade)
+  yearStatsId       String
+  repoId            String
+  fullName          String
+  description       String?
+  starsGained2025   Int       @default(0)
+  commitsByUser2025 Int       @default(0)
+  prsByUser2025     Int       @default(0)
+  issuesByUser2025  Int       @default(0)
+  role              String
+  languagesJson     Json?
+}
+
+model LanguageStats {
+  id                String    @id @default(cuid())
+  yearStats         YearStats @relation(fields: [yearStatsId], references: [id], onDelete: Cascade)
+  yearStatsId       String
+  language          String
+  contributionShare Float
+  firstTimeIn2025   Boolean   @default(false)
+  color             String?
+}
+
+model CollaboratorStats {
+  id               String    @id @default(cuid())
+  yearStats        YearStats @relation(fields: [yearStatsId], references: [id], onDelete: Cascade)
+  yearStatsId      String
+  githubId         String
+  username         String
+  avatarUrl        String?
+  interactionScore Int       @default(0)
+}
+
+model Achievement {
+  id          String            @id @default(cuid())
+  code        String            @unique
+  name        String
+  description String
+  icon        String?
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  year          Int
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  achievementId String
+  earnedAt      DateTime    @default(now())
+  metadataJson  Json?
+
+  @@unique([userId, achievementId, year])
+}
+
+model ProfileSettings {
+  id                   String   @id @default(cuid())
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId               String
+  year                 Int
+  publicProfileEnabled Boolean  @default(false)
+  includePrivateRepos  Boolean  @default(false)
+  themeVariant         String   @default("nebula-blue")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([userId, year])
+}
+
+model AnalyticsEvent {
+  id           String   @id @default(cuid())
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId       String?
+  year         Int?
+  event        String
+  createdAt    DateTime @default(now())
+  metadataJson Json?
+}
