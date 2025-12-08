@@ -11,14 +11,15 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  githubId  String   @unique
-  username  String   @unique
-  name      String?
-  avatarUrl String?
-  email     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String    @id @default(cuid())
+  githubId        String    @unique
+  username        String    @unique
+  name            String?
+  avatarUrl       String?
+  email           String?
+  githubCreatedAt DateTime? // When the GitHub account was created
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   accounts     OAuthAccount[]
   yearStats    YearStats[]

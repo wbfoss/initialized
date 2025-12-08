@@ -163,6 +163,7 @@ export default async function PublicProfile({ params }: PageProps) {
         username: user.username,
         name: user.name,
         avatarUrl: user.avatarUrl,
+        githubCreatedAt: user.githubCreatedAt?.toISOString() || null,
       }}
       yearStats={{
         summaryJson: yearStats.summaryJson,

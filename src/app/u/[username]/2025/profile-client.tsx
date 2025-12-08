@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   GitCommit,
@@ -26,11 +27,17 @@ import {
   Check,
 } from 'lucide-react';
 
+const DashboardScene = dynamic(
+  () => import('@/components/three/DashboardScene').then((mod) => mod.DashboardScene),
+  { ssr: false, loading: () => null }
+);
+
 interface PublicProfileProps {
   user: {
     username: string;
     name: string | null;
     avatarUrl: string | null;
+    githubCreatedAt: string | null;
   };
   yearStats: {
     summaryJson: unknown;
@@ -72,6 +79,26 @@ interface SummaryStats {
   contributionsByMonth?: Array<{ month: number; count: number }>;
 }
 
+// Calculate clearance level based on GitHub account age
+function calculateClearanceLevel(githubCreatedAt: string | null): { level: number; title: string } {
+  if (!githubCreatedAt) return { level: 1, title: 'ENSIGN' };
+
+  const createdDate = new Date(githubCreatedAt);
+  const now = new Date();
+  const yearsOnGitHub = Math.floor((now.getTime() - createdDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+
+  if (yearsOnGitHub >= 15) return { level: 10, title: 'FLEET ADMIRAL' };
+  if (yearsOnGitHub >= 12) return { level: 9, title: 'ADMIRAL' };
+  if (yearsOnGitHub >= 10) return { level: 8, title: 'VICE ADMIRAL' };
+  if (yearsOnGitHub >= 8) return { level: 7, title: 'COMMODORE' };
+  if (yearsOnGitHub >= 6) return { level: 6, title: 'CAPTAIN' };
+  if (yearsOnGitHub >= 4) return { level: 5, title: 'COMMANDER' };
+  if (yearsOnGitHub >= 3) return { level: 4, title: 'LT COMMANDER' };
+  if (yearsOnGitHub >= 2) return { level: 3, title: 'LIEUTENANT' };
+  if (yearsOnGitHub >= 1) return { level: 2, title: 'LT JUNIOR GRADE' };
+  return { level: 1, title: 'ENSIGN' };
+}
+
 export function PublicProfileClient({
   user,
   yearStats,
@@ -81,12 +108,17 @@ export function PublicProfileClient({
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [barsAnimated, setBarsAnimated] = useState(false);
 
   const stardate = `${new Date().getFullYear()}.${Math.floor((Date.now() % 31536000000) / 86400000).toString().padStart(3, '0')}`;
   const shipRegistry = `NCC-${user.username.length * 1000 + 2025}`;
+  const clearance = calculateClearanceLevel(user.githubCreatedAt);
 
   useEffect(() => {
     setMounted(true);
+    // Trigger bar animation after a short delay
+    const timer = setTimeout(() => setBarsAnimated(true), 500);
+    return () => clearTimeout(timer);
   }, []);
 
   const copyShareLink = () => {
@@ -111,6 +143,15 @@ export function PublicProfileClient({
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black font-mono select-none">
+      {/* 3D Background Scene */}
+      <div className="absolute inset-0 z-0 opacity-40">
+        <DashboardScene
+          totalContributions={summary.totalContributions}
+          monthlyData={summary.contributionsByMonth || []}
+          repos={yearStats.repos}
+        />
+      </div>
+
       {/* Scan line effect */}
       <div
         className="pointer-events-none fixed inset-0 z-50 opacity-[0.02]"
@@ -199,7 +240,7 @@ export function PublicProfileClient({
               </Avatar>
               <div className="text-[#f59e0b] text-sm font-bold text-center">{user.name || user.username}</div>
               <div className="text-[#9370db] text-[10px] tracking-widest">@{user.username}</div>
-              <div className="text-[#cc6666] text-[9px] mt-1 tracking-widest">CLEARANCE LEVEL 7</div>
+              <div className="text-[#cc6666] text-[9px] mt-1 tracking-widest">{clearance.title} • LEVEL {clearance.level}</div>
             </div>
           </div>
 
@@ -416,15 +457,19 @@ export function PublicProfileClient({
               </div>
               <div className="flex items-end justify-between gap-1 h-24">
                 {(summary.contributionsByMonth || Array(12).fill({ count: Math.random() * 100 })).map((m, i) => {
-                  const height = Math.max(10, (m.count / Math.max(...(summary.contributionsByMonth?.map(x => x.count) || [100]))) * 100);
+                  const maxCount = Math.max(...(summary.contributionsByMonth?.map(x => x.count) || [100]));
+                  const targetHeight = Math.max(10, (m.count / maxCount) * 100);
+                  const displayHeight = barsAnimated ? targetHeight : 0;
                   return (
                     <div key={i} className="flex-1 flex flex-col items-center gap-1">
                       <div
-                        className="w-full rounded-t transition-all duration-500"
+                        className="w-full rounded-t transition-all ease-out"
                         style={{
-                          height: `${height}%`,
+                          height: `${displayHeight}%`,
                           backgroundColor: i % 2 === 0 ? '#f59e0b' : '#9370db',
-                          opacity: 0.6 + (height / 200)
+                          opacity: 0.6 + (targetHeight / 200),
+                          transitionDuration: `${800 + i * 100}ms`,
+                          transitionDelay: `${i * 50}ms`
                         }}
                       />
                       <span className="text-[8px] text-[#ffebb8]/40">

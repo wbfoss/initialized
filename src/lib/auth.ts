@@ -24,6 +24,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         name?: string;
         avatar_url?: string;
         email?: string;
+        created_at?: string;
       };
 
       try {
@@ -34,6 +35,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: githubProfile.name,
             avatarUrl: githubProfile.avatar_url,
             email: githubProfile.email,
+            githubCreatedAt: githubProfile.created_at ? new Date(githubProfile.created_at) : undefined,
           },
           create: {
             githubId: String(githubProfile.id),
@@ -41,6 +43,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: githubProfile.name,
             avatarUrl: githubProfile.avatar_url,
             email: githubProfile.email,
+            githubCreatedAt: githubProfile.created_at ? new Date(githubProfile.created_at) : null,
           },
         });
 
