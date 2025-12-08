@@ -127,10 +127,11 @@ export function DashboardClient({ user, yearStats, achievements, settings }: Das
   };
 
   return (
-    <div className="relative min-h-screen bg-black text-white">
-      {/* 3D Background */}
+    <div className="relative min-h-screen text-white">
+      {/* 3D Background - Always visible */}
       {!needsRefresh && summary && (
-        <DashboardScene
+        <div className="fixed inset-0 z-0">
+          <DashboardScene
           totalContributions={summary.totalContributions}
           monthlyData={summary.contributionsByMonth || []}
           repos={yearStats?.repos || []}
@@ -142,11 +143,12 @@ export function DashboardClient({ user, yearStats, achievements, settings }: Das
             description: a.description,
             icon: a.icon,
           }))}
-        />
+          />
+        </div>
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-zinc-800 bg-black/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-zinc-800/50 bg-black/60 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <div className="flex items-center gap-4">
             <h1 className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-xl font-bold text-transparent">
@@ -198,7 +200,7 @@ export function DashboardClient({ user, yearStats, achievements, settings }: Das
       </header>
 
       {/* Main content */}
-      <main className="mx-auto max-w-7xl px-4 py-8">
+      <main className="relative z-10 mx-auto max-w-7xl px-4 py-8">
         {needsRefresh ? (
           <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
             <div className="mb-8 rounded-full bg-purple-500/20 p-6">
@@ -287,7 +289,7 @@ export function DashboardClient({ user, yearStats, achievements, settings }: Das
 
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {yearStats?.repos.slice(0, 6).map((repo) => (
-                  <Card key={repo.fullName} className="border-zinc-800 bg-zinc-900/50">
+                  <Card key={repo.fullName} className="border-zinc-800/50 bg-black/40 backdrop-blur-md">
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between">
                         <CardTitle className="text-sm font-medium text-zinc-200">
@@ -333,7 +335,7 @@ export function DashboardClient({ user, yearStats, achievements, settings }: Das
                 <p className="text-zinc-400">Languages you&apos;ve used</p>
               </div>
 
-              <Card className="border-zinc-800 bg-zinc-900/50">
+              <Card className="border-zinc-800/50 bg-black/40 backdrop-blur-md">
                 <CardContent className="pt-6">
                   <div className="flex flex-wrap gap-3">
                     {yearStats?.languages.map((lang) => (
@@ -387,7 +389,7 @@ export function DashboardClient({ user, yearStats, achievements, settings }: Das
                 {achievements.map((achievement) => (
                   <Card
                     key={achievement.code}
-                    className="border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-800"
+                    className="border-zinc-800/50 bg-black/40 backdrop-blur-md"
                   >
                     <CardContent className="flex items-center gap-4 p-4">
                       <div className="rounded-full bg-yellow-500/20 p-3">
@@ -564,7 +566,7 @@ function StatCard({
   const bgClass = COLOR_BG_CLASSES[color] || 'bg-zinc-500/20';
 
   return (
-    <Card className="border-zinc-800 bg-zinc-900/50 transition-transform hover:scale-[1.02]">
+    <Card className="border-zinc-800/50 bg-black/40 backdrop-blur-md transition-transform hover:scale-[1.02]">
       <CardContent className="flex items-center gap-4 p-6">
         <div className={`rounded-full ${bgClass} p-3`}>{icon}</div>
         <div>

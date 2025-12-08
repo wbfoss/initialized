@@ -118,7 +118,7 @@ export function DashboardScene({
   achievements,
 }: DashboardSceneProps) {
   return (
-    <div className="absolute inset-0 -z-10">
+    <div className="h-full w-full">
       <Canvas>
         <color attach="background" args={['#000000']} />
         <PerspectiveCamera makeDefault position={[0, 8, 25]} fov={60} />
