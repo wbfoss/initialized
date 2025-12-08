@@ -74,7 +74,7 @@ export default function Home() {
 
             <a
               href="/u/demo/2025"
-              className="text-sm text-zinc-400 hover:text-white transition-colors"
+              className="text-sm text-zinc-400 hover:text-white transition-colors cursor-pointer underline"
             >
               View demo profile
             </a>
