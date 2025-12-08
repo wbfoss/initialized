@@ -1,197 +1,102 @@
-# Initialized - GitHub Year-in-Review 2025
+# Initialized
 
-A stunning 3D visualization of your GitHub contributions, transforming your coding journey into an interactive galactic experience.
+### Your GitHub Year, Visualized in 3D
+
+Transform your GitHub contributions into an interactive galactic journey. See your commits as stars, your languages as nebulae, and unlock achievements based on your coding patterns.
+
+**[Try it now at initialized.dev](https://initialized.dev)**
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
-![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma)
-![Three.js](https://img.shields.io/badge/Three.js-0.181-black?logo=three.js)
+![Three.js](https://img.shields.io/badge/Three.js-3D-black?logo=three.js)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-## Features
+---
 
-- **3D Galactic Visualization** - Your contributions rendered as stars, nebulae, and constellations using Three.js
-- **GitHub OAuth Integration** - Secure authentication via NextAuth.js
-- **Real-time Stats** - Fetches live data from GitHub's GraphQL API
-- **Achievement System** - 15+ unlockable badges based on your contributions
-- **Public Profile Sharing** - Share your year in review with custom OG images
-- **Theme Variants** - Nebula Blue, Supernova Violet, and Dark Matter themes
-- **Privacy Controls** - Choose to include/exclude private repositories
+## What You Get
 
-## Tech Stack
+**Instant GitHub Insights** — Connect with GitHub OAuth in seconds. No manual data entry, no waiting. Your entire year of contributions rendered instantly.
 
-| Category | Technology |
-|----------|------------|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript 5 |
-| Database | PostgreSQL with Prisma 7 |
-| 3D Graphics | Three.js / React Three Fiber |
-| Authentication | NextAuth.js v5 |
-| Styling | Tailwind CSS 4 |
-| Validation | Zod |
-| Testing | Vitest |
+**3D Galaxy Visualization** — Your contributions become a living universe. Watch your commits light up as stars, see your repositories form constellations, and explore your language usage as colorful nebulae.
 
-## Getting Started
+**Achievement Badges** — Earn 15+ badges based on your coding habits. Are you a Night Owl or an Early Bird? A Streak Master or a PR Machine? Discover your developer identity.
 
-### Prerequisites
+**Shareable Profiles** — Generate beautiful public profiles with custom OG images. Share your year in review on social media and flex your contribution stats.
 
-- Node.js 18+
-- PostgreSQL database
-- GitHub OAuth App credentials
+**Privacy First** — You control what's visible. Include or exclude private repos. Make your profile public or keep it private. Your data, your rules.
 
-### Installation
+---
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/wbfoss/initialized.git
-   cd initialized
-   ```
+## Featured Achievements
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+| | Badge | Earn It By |
+|---|-------|------------|
+| | **Streak Master** | 30+ day contribution streak |
+| | **Thousand Club** | 1,000+ contributions in a year |
+| | **Polyglot** | Using 5+ programming languages |
+| | **Night Owl** | Commits between midnight-4am |
+| | **PR Machine** | 50+ pull requests merged |
+| | **Star Collector** | Repos that gained 100+ stars |
 
-3. **Set up environment variables**
+[See all achievements →](https://initialized.dev)
 
-   Create a `.env` file in the root directory:
-   ```env
-   # Database
-   DATABASE_URL="postgresql://user:password@localhost:5432/initialized"
+---
 
-   # Auth
-   AUTH_SECRET="your-secret-key-min-32-chars"
-   AUTH_GITHUB_ID="your-github-oauth-app-id"
-   AUTH_GITHUB_SECRET="your-github-oauth-app-secret"
+## Theme Your Galaxy
 
-   # App
-   NEXTAUTH_URL="http://localhost:3000"
-   ```
+Choose from three stunning visual themes:
 
-4. **Set up the database**
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
+- **Nebula Blue** — Cool blues and cyans
+- **Supernova Violet** — Purple and pink tones
+- **Dark Matter** — Deep blacks with subtle highlights
 
-5. **Run the development server**
-   ```bash
-   npm run dev
-   ```
+---
 
-6. **Open [http://localhost:3000](http://localhost:3000)**
+## Built With
 
-### Creating a GitHub OAuth App
+A modern stack optimized for performance and developer experience:
 
-1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
-2. Click "New OAuth App"
-3. Fill in the details:
-   - **Application name**: Initialized (or your choice)
-   - **Homepage URL**: `http://localhost:3000`
-   - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
-4. Copy the Client ID and generate a Client Secret
+- **Next.js 16** with App Router
+- **Three.js** & React Three Fiber for 3D graphics
+- **PostgreSQL** with Prisma ORM
+- **Tailwind CSS 4** for styling
+- **Zod** for type-safe validation
 
-## Scripts
+---
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run test` | Run tests |
-| `npm run lint` | Run ESLint |
-| `npm run format` | Format code with Prettier |
-| `npm run seed` | Seed demo user data |
+## Self-Host or Contribute
 
-## Project Structure
+Initialized is open source. Run your own instance or help make it better.
 
-```
-src/
-├── app/                    # Next.js App Router pages
-│   ├── 2025/              # Dashboard page
-│   ├── about/             # About page
-│   ├── api/               # API routes
-│   │   ├── auth/          # NextAuth endpoints
-│   │   ├── og/            # OG image generation
-│   │   ├── public/        # Public profile API
-│   │   ├── settings/      # User settings
-│   │   └── stats/         # Stats endpoints
-│   ├── privacy/           # Privacy policy
-│   ├── settings/          # Settings page
-│   └── u/[username]/      # Public profile pages
-├── components/
-│   ├── three/             # 3D visualization components
-│   │   ├── AchievementHall.tsx
-│   │   ├── ActivityOrbit.tsx
-│   │   ├── DashboardScene.tsx
-│   │   ├── LanguageNebula.tsx
-│   │   ├── OverviewStar.tsx
-│   │   ├── RepoConstellation.tsx
-│   │   ├── SquadronFormation.tsx
-│   │   └── StarfieldCanvas.tsx
-│   ├── providers/         # React context providers
-│   └── ui/                # UI components (shadcn/ui)
-├── lib/
-│   ├── auth.ts            # NextAuth configuration
-│   ├── crypto.ts          # Token encryption utilities
-│   ├── github.ts          # GitHub API service
-│   ├── prisma.ts          # Prisma client
-│   ├── rate-limit.ts      # Rate limiting utilities
-│   ├── utils.ts           # Utility functions
-│   └── validations.ts     # Zod schemas
-└── types/                 # TypeScript type definitions
+| | |
+|---|---|
+| **[Setup Guide](./docs/SETUP.md)** | Run Initialized locally |
+| **[Architecture](./docs/ARCHITECTURE.md)** | Understand the codebase |
+| **[Contributing](./CONTRIBUTING.md)** | Submit PRs and report issues |
+
+---
+
+## Quick Start for Contributors
+
+```bash
+git clone https://github.com/wbfoss/initialized.git
+cd initialized
+npm install
+cp .env.example .env  # Configure your environment
+npm run dev
 ```
 
-## Security
+See the [full setup guide](./docs/SETUP.md) for database and OAuth configuration.
 
-- **Token Encryption**: OAuth tokens are encrypted using AES-256-GCM
-- **Input Validation**: All API inputs validated with Zod schemas
-- **Rate Limiting**:
-  - Stats refresh: 5 requests/hour
-  - Settings updates: 20 requests/minute
-- **Database Transactions**: Atomic operations for data integrity
-
-## Achievements
-
-| Badge | Name | Description |
-|-------|------|-------------|
-| STREAK_MASTER | Streak Master | 30+ day contribution streak |
-| CENTURY | Century | 100+ contributions in a month |
-| POLYGLOT | Polyglot | Used 5+ programming languages |
-| GALAXY_WANDERER | Galaxy Wanderer | Contributed to 10+ repos |
-| NIGHT_OWL | Night Owl | Commits between midnight-4am |
-| EARLY_BIRD | Early Bird | Commits between 5-7am |
-| THOUSAND_CLUB | Thousand Club | 1000+ contributions in the year |
-| PR_MACHINE | PR Machine | 50+ pull requests |
-| BUG_HUNTER | Bug Hunter | 30+ issues opened |
-| CONSISTENT | Consistent | Contributions every month |
-| OPEN_SOURCERER | Open Sourcerer | Contributed to public repos |
-| STAR_COLLECTOR | Star Collector | Repos gained 100+ stars |
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-
-- Follow the existing code style
-- Write tests for new features
-- Update documentation as needed
-- Ensure all tests pass before submitting PR
+---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License — see [LICENSE](LICENSE) for details.
 
-## Acknowledgments
+---
 
-- [Three.js](https://threejs.org/) for 3D graphics
-- [React Three Fiber](https://docs.pmnd.rs/react-three-fiber) for React integration
-- [shadcn/ui](https://ui.shadcn.com/) for UI components
-- [Vercel](https://vercel.com/) for hosting
+<p align="center">
+  <strong><a href="https://initialized.dev">initialized.dev</a></strong><br>
+  See your code. Visualized.
+</p>
