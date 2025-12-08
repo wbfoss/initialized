@@ -42,6 +42,7 @@ export interface RepoContributionData {
   fullName: string;
   description: string | null;
   isPrivate: boolean;
+  isOwner: boolean; // Whether the user owns this repo
   primaryLanguage: string | null;
   languages: { name: string; percentage: number; color: string | null }[];
   stargazersCount: number;
@@ -252,6 +253,9 @@ export async function fetchUserReposForYear(
             nameWithOwner
             description
             isPrivate
+            owner {
+              login
+            }
             primaryLanguage {
               name
               color
@@ -282,6 +286,7 @@ export async function fetchUserReposForYear(
           nameWithOwner: string;
           description: string | null;
           isPrivate: boolean;
+          owner: { login: string };
           primaryLanguage: { name: string; color: string } | null;
           languages: {
             edges: Array<{
@@ -313,6 +318,9 @@ export async function fetchUserReposForYear(
       // Skip private repos if not included
       if (repo.isPrivate && !includePrivate) continue;
 
+      // Check if user owns this repo (case-insensitive comparison)
+      const isOwner = repo.owner.login.toLowerCase() === username.toLowerCase();
+
       // Calculate language percentages
       const totalSize = repo.languages.edges.reduce((sum, edge) => sum + edge.size, 0);
       const languages = repo.languages.edges.map((edge) => ({
@@ -326,6 +334,7 @@ export async function fetchUserReposForYear(
         fullName: repo.nameWithOwner,
         description: repo.description,
         isPrivate: repo.isPrivate,
+        isOwner,
         primaryLanguage: repo.primaryLanguage?.name || null,
         languages,
         stargazersCount: repo.stargazerCount,
@@ -585,12 +594,17 @@ export function computeAggregatedYearStats(raw: {
     else repo.role = 'SHUTTLE';
   });
 
+  // Only count stars from repos the user owns
+  const ownedReposStars = repos
+    .filter((r) => r.isOwner)
+    .reduce((sum, r) => sum + r.stargazersCount, 0);
+
   return {
     totalContributions: contributions.totalContributions,
     totalCommits: contributions.totalCommitContributions,
     totalPRs: contributions.totalPullRequestContributions,
     totalIssues: contributions.totalIssueContributions,
-    totalStarsEarned: repos.reduce((sum, r) => sum + r.stargazersCount, 0),
+    totalStarsEarned: ownedReposStars,
     contributionsByMonth,
     topLanguages,
     topRepos: sortedRepos.slice(0, 10),
