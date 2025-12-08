@@ -71,13 +71,6 @@ export default function Home() {
               <Github className="h-5 w-5" />
               Sign in with GitHub
             </Button>
-
-            <a
-              href="/u/demo/2025"
-              className="text-sm text-zinc-400 hover:text-white transition-colors cursor-pointer underline"
-            >
-              View demo profile
-            </a>
           </CardContent>
         </Card>
 
