@@ -182,36 +182,6 @@ export function IDCardClient({ user, stats }: IDCardClientProps) {
               </div>
             </div>
 
-            {/* Stats Bar */}
-            <div className="mt-6 pt-4 border-t border-gray-700">
-              <div className="grid grid-cols-4 gap-2">
-                <div className="text-center">
-                  <div className="text-lg font-bold" style={{ color: division.color }}>
-                    {stats.totalContributions.toLocaleString()}
-                  </div>
-                  <div className="text-[8px] text-gray-500 tracking-widest">CONTRIB</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-[#22d3ee]">
-                    {stats.totalCommits.toLocaleString()}
-                  </div>
-                  <div className="text-[8px] text-gray-500 tracking-widest">COMMITS</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-[#9370db]">
-                    {stats.longestStreak}
-                  </div>
-                  <div className="text-[8px] text-gray-500 tracking-widest">STREAK</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-[#cc6666]">
-                    {stats.achievementCount}
-                  </div>
-                  <div className="text-[8px] text-gray-500 tracking-widest">MEDALS</div>
-                </div>
-              </div>
-            </div>
-
             {/* Specializations */}
             {stats.topLanguages.length > 0 && (
               <div className="mt-4">

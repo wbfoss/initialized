@@ -217,7 +217,7 @@ export function PublicProfileClient({
       {/* ═══════════════════════════════════════════════════════════════════
           LEFT SIDEBAR
           ═══════════════════════════════════════════════════════════════════ */}
-      <div className="absolute left-0 top-[88px] bottom-[88px] w-64 z-20 flex">
+      <div className="absolute left-0 top-[88px] bottom-[54px] w-52 z-20 flex">
         {/* Left Edge Bar */}
         <div className="w-8 bg-[#f59e0b] flex flex-col">
           <div className="h-12 bg-[#cc6666] rounded-br-[20px]" />
@@ -307,7 +307,7 @@ export function PublicProfileClient({
       {/* ═══════════════════════════════════════════════════════════════════
           RIGHT SIDEBAR
           ═══════════════════════════════════════════════════════════════════ */}
-      <div className="absolute right-0 top-[88px] bottom-[88px] w-64 z-20 flex">
+      <div className="absolute right-0 top-[88px] bottom-[54px] w-52 z-20 flex">
         {/* Right Panel Content */}
         <div className="flex-1 bg-black/80 backdrop-blur-sm border-l-4 border-[#9370db]">
           {/* Section: Commendations */}
@@ -362,41 +362,41 @@ export function PublicProfileClient({
             </div>
           </div>
 
-          {/* Section: Crew Manifest */}
+          {/* Section: Crew Manifest (Compact) */}
           <div className="border-b-2 border-[#9370db]/30">
-            <div className="bg-[#f59e0b] px-4 py-2 flex items-center justify-between">
-              <span className="text-black text-[11px] font-bold tracking-widest">CREW MANIFEST</span>
-              <span className="text-black/60 text-[9px] font-bold">{yearStats.collaborators.length}</span>
+            <div className="bg-[#f59e0b] px-3 py-1 flex items-center justify-between">
+              <span className="text-black text-[10px] font-bold tracking-widest">CREW</span>
+              <span className="text-black/60 text-[8px] font-bold">{yearStats.collaborators.length}</span>
             </div>
-            <div className="p-3">
-              <div className="flex flex-wrap gap-1.5">
-                {yearStats.collaborators.slice(0, 12).map((collab) => (
+            <div className="p-2">
+              <div className="flex flex-wrap gap-1">
+                {yearStats.collaborators.slice(0, 8).map((collab) => (
                   <Avatar
                     key={collab.username}
-                    className="h-8 w-8 border-2 border-[#f59e0b]"
+                    className="h-6 w-6 border border-[#f59e0b]"
                     title={`@${collab.username}`}
                   >
                     <AvatarImage src={collab.avatarUrl || undefined} />
-                    <AvatarFallback className="bg-[#f59e0b]/20 text-[#f59e0b] text-[10px]">
+                    <AvatarFallback className="bg-[#f59e0b]/20 text-[#f59e0b] text-[8px]">
                       {collab.username?.[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 ))}
-                {yearStats.collaborators.length > 12 && (
-                  <div className="h-8 w-8 rounded-full border-2 border-[#f59e0b] bg-black flex items-center justify-center text-[9px] text-[#f59e0b]">
-                    +{yearStats.collaborators.length - 12}
+                {yearStats.collaborators.length > 8 && (
+                  <div className="h-6 w-6 rounded-full border border-[#f59e0b] bg-black flex items-center justify-center text-[7px] text-[#f59e0b]">
+                    +{yearStats.collaborators.length - 8}
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Section: System Status */}
+          {/* Section: System Status (Compact) */}
           <div>
-            <div className="bg-[#22d3ee] px-4 py-2">
-              <span className="text-black text-[11px] font-bold tracking-widest">SYSTEM STATUS</span>
+            <div className="bg-[#22d3ee] px-3 py-1">
+              <span className="text-black text-[10px] font-bold tracking-widest">SYSTEMS</span>
             </div>
-            <div className="p-3">
+            <div className="p-2">
               <SystemStatusPanel />
             </div>
           </div>
@@ -413,7 +413,7 @@ export function PublicProfileClient({
       {/* ═══════════════════════════════════════════════════════════════════
           CENTER MAIN DISPLAY
           ═══════════════════════════════════════════════════════════════════ */}
-      <div className="absolute left-64 right-64 top-[96px] bottom-[96px] z-10 flex flex-col p-4">
+      <div className="absolute left-52 right-52 top-[96px] bottom-[54px] z-10 flex flex-col p-4">
         {/* Main Stats Display */}
         <div className="flex-1 flex flex-col items-center justify-center">
           {/* Transmission Header */}
@@ -483,100 +483,61 @@ export function PublicProfileClient({
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-4 gap-4 w-full max-w-3xl">
-            <StatDisplay icon={<GitCommit className="h-5 w-5" />} label="COMMITS" value={summary.totalCommits} color="#f59e0b" />
-            <StatDisplay icon={<GitPullRequest className="h-5 w-5" />} label="PULL REQ" value={summary.totalPRs} color="#22d3ee" />
-            <StatDisplay icon={<AlertCircle className="h-5 w-5" />} label="ISSUES" value={summary.totalIssues} color="#9370db" />
-            <StatDisplay icon={<Flame className="h-5 w-5" />} label="STREAK" value={summary.longestStreak} color="#cc6666" suffix=" days" />
-          </div>
         </div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          BOTTOM LCARS FRAME
+          BOTTOM LCARS FRAME (Compact)
           ═══════════════════════════════════════════════════════════════════ */}
       <div className="absolute bottom-0 left-0 right-0 z-30">
-        {/* Bottom data bars */}
-        <div className="h-4 flex gap-[2px] px-8 pb-1">
-          {[...Array(60)].map((_, i) => (
-            <div
-              key={i}
-              className="flex-1 rounded-sm"
-              style={{
-                backgroundColor: i % 4 === 0 ? '#f59e0b' : i % 4 === 1 ? '#9370db' : i % 4 === 2 ? '#cc6666' : '#22d3ee',
-                opacity: 0.2 + Math.abs(30 - i) / 60
-              }}
-            />
-          ))}
-        </div>
-
         <div className="flex">
           {/* Bottom-Left Corner Elbow */}
           <div className="flex flex-col-reverse">
-            <div className="h-16 w-48 bg-[#cc6666] rounded-tr-[50px] flex items-center justify-end pr-6">
-              <span className="text-black text-[10px] font-bold tracking-widest">INITIALIZED.DEV</span>
+            <div className="h-12 w-40 bg-[#cc6666] rounded-tr-[40px] flex items-center justify-end pr-4">
+              <span className="text-black text-[9px] font-bold tracking-widest">INITIALIZED.DEV</span>
             </div>
-            <div className="h-12 w-8 bg-[#cc6666]" />
+            <div className="h-6 w-6 bg-[#cc6666]" />
           </div>
 
-          {/* Bottom Bar */}
-          <div className="flex-1 bg-black/80 border-t-4 border-[#cc6666] backdrop-blur-sm">
-            <div className="flex items-center justify-between px-8 py-3">
-              {/* Left info */}
-              <div className="flex items-center gap-6 text-[10px]">
-                <span className="text-[#f59e0b]/60">FEDERATION STANDARD TIME</span>
-                <span className="text-[#22d3ee]/60">QUADRANT: ALPHA</span>
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex items-center gap-2">
-                <Link
-                  href={`/u/${user.username}/2025/id-card`}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#cc6666] hover:bg-[#cc6666]/80 text-black text-[10px] font-bold uppercase tracking-widest rounded-full transition-all cursor-pointer"
-                >
-                  <IdCard className="h-3 w-3" />
-                  ID CARD
-                </Link>
-                <button
-                  onClick={copyShareLink}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#f59e0b] hover:bg-[#f59e0b]/80 text-black text-[10px] font-bold uppercase tracking-widest rounded-full transition-all cursor-pointer"
-                >
-                  {copied ? <Check className="h-3 w-3" /> : <Share2 className="h-3 w-3" />}
-                  {copied ? 'COPIED' : 'SHARE'}
-                </button>
-                <button
-                  onClick={toggleFullscreen}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#9370db] hover:bg-[#9370db]/80 text-black text-[10px] font-bold uppercase tracking-widest rounded-full transition-all cursor-pointer"
-                >
-                  <Maximize className="h-3 w-3" />
-                  FULLSCREEN
-                </button>
-                <Link
-                  href="/"
-                  className="flex items-center gap-2 px-4 py-2 bg-[#22d3ee] hover:bg-[#22d3ee]/80 text-black text-[10px] font-bold uppercase tracking-widest rounded-full transition-all cursor-pointer"
-                >
-                  CREATE YOURS
-                </Link>
-              </div>
-
-              {/* Right info */}
-              <div className="flex items-center gap-4 text-[10px]">
-                <span className="text-[#9370db]/60">BUILD: 2025.DEC</span>
-                <span className="text-[#cc6666] flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                  ONLINE
-                </span>
-              </div>
+          {/* Bottom Bar - Centered buttons */}
+          <div className="flex-1 bg-black/90 border-t-2 border-[#cc6666]">
+            <div className="flex items-center justify-center gap-3 py-2">
+              <Link
+                href={`/u/${user.username}/2025/id-card`}
+                className="flex items-center gap-2 px-4 py-1.5 bg-[#cc6666] hover:bg-[#cc6666]/80 text-black text-[9px] font-bold uppercase tracking-widest rounded-full transition-all cursor-pointer"
+              >
+                <IdCard className="h-3 w-3" />
+                ID CARD
+              </Link>
+              <button
+                onClick={copyShareLink}
+                className="flex items-center gap-2 px-4 py-1.5 bg-[#f59e0b] hover:bg-[#f59e0b]/80 text-black text-[9px] font-bold uppercase tracking-widest rounded-full transition-all cursor-pointer"
+              >
+                {copied ? <Check className="h-3 w-3" /> : <Share2 className="h-3 w-3" />}
+                {copied ? 'COPIED' : 'SHARE'}
+              </button>
+              <button
+                onClick={toggleFullscreen}
+                className="flex items-center gap-2 px-4 py-1.5 bg-[#9370db] hover:bg-[#9370db]/80 text-black text-[9px] font-bold uppercase tracking-widest rounded-full transition-all cursor-pointer"
+              >
+                <Maximize className="h-3 w-3" />
+                FULLSCREEN
+              </button>
+              <Link
+                href="/"
+                className="flex items-center gap-2 px-4 py-1.5 bg-[#22d3ee] hover:bg-[#22d3ee]/80 text-black text-[9px] font-bold uppercase tracking-widest rounded-full transition-all cursor-pointer"
+              >
+                CREATE YOURS
+              </Link>
             </div>
           </div>
 
           {/* Bottom-Right Corner Elbow */}
           <div className="flex flex-col-reverse items-end">
-            <div className="h-16 w-48 bg-[#22d3ee] rounded-tl-[50px] flex items-center pl-6">
-              <span className="text-black text-[10px] font-bold tracking-widest">YEAR IN REVIEW</span>
+            <div className="h-12 w-40 bg-[#22d3ee] rounded-tl-[40px] flex items-center pl-4">
+              <span className="text-black text-[9px] font-bold tracking-widest">YEAR IN REVIEW</span>
             </div>
-            <div className="h-12 w-8 bg-[#22d3ee]" />
+            <div className="h-6 w-6 bg-[#22d3ee]" />
           </div>
         </div>
       </div>
