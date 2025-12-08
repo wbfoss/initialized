@@ -13,8 +13,13 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { username } = await params;
 
-  const user = await prisma.user.findUnique({
-    where: { username },
+  const user = await prisma.user.findFirst({
+    where: {
+      username: {
+        equals: username,
+        mode: 'insensitive',
+      }
+    },
     select: { name: true, username: true },
   });
 
@@ -47,9 +52,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function PublicProfile({ params }: PageProps) {
   const { username } = await params;
 
-  // Find user
-  const user = await prisma.user.findUnique({
-    where: { username },
+  // Find user (case-insensitive search)
+  const user = await prisma.user.findFirst({
+    where: {
+      username: {
+        equals: username,
+        mode: 'insensitive',
+      }
+    },
     include: {
       settings: {
         where: { year: 2025 },

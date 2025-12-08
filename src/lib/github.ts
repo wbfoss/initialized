@@ -121,6 +121,45 @@ async function githubGraphQL<T>(query: string, token: string, variables?: object
   return data.data;
 }
 
+// Fetch organizations where the user is an owner/admin
+export async function fetchUserOwnedOrgs(token: string): Promise<string[]> {
+  const query = `
+    query {
+      viewer {
+        organizations(first: 100) {
+          nodes {
+            login
+            viewerIsAMember
+            viewerCanAdminister
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const data = await githubGraphQL<{
+      viewer: {
+        organizations: {
+          nodes: Array<{
+            login: string;
+            viewerIsAMember: boolean;
+            viewerCanAdminister: boolean;
+          }>;
+        };
+      };
+    }>(query, token, {});
+
+    // Return orgs where user can administer (owner-level access)
+    return data.viewer.organizations.nodes
+      .filter((org) => org.viewerCanAdminister)
+      .map((org) => org.login.toLowerCase());
+  } catch (error) {
+    console.error('Error fetching user orgs:', error);
+    return [];
+  }
+}
+
 // Fetch user core profile
 export async function fetchUserCoreProfile(token: string): Promise<UserCoreProfile> {
   const user = await githubRest<{
@@ -232,7 +271,8 @@ export async function fetchUserReposForYear(
   token: string,
   username: string,
   year: number,
-  includePrivate: boolean = false
+  includePrivate: boolean = false,
+  ownedOrgs: string[] = []
 ): Promise<RepoContributionData[]> {
   // First, get all repos the user has contributed to
   const query = `
@@ -318,8 +358,10 @@ export async function fetchUserReposForYear(
       // Skip private repos if not included
       if (repo.isPrivate && !includePrivate) continue;
 
-      // Check if user owns this repo (case-insensitive comparison)
-      const isOwner = repo.owner.login.toLowerCase() === username.toLowerCase();
+      // Check if user owns this repo (user's own repo OR org where user is admin)
+      const ownerLower = repo.owner.login.toLowerCase();
+      const usernameLower = username.toLowerCase();
+      const isOwner = ownerLower === usernameLower || ownedOrgs.includes(ownerLower);
 
       // Calculate language percentages
       const totalSize = repo.languages.edges.reduce((sum, edge) => sum + edge.size, 0);

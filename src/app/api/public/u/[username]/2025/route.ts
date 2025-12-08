@@ -12,9 +12,14 @@ export async function GET(request: Request, { params }: RouteParams) {
     const { username } = await params;
     const year = 2025;
 
-    // Find user by username
-    const user = await prisma.user.findUnique({
-      where: { username },
+    // Find user by username (case-insensitive)
+    const user = await prisma.user.findFirst({
+      where: {
+        username: {
+          equals: username,
+          mode: 'insensitive',
+        }
+      },
       include: {
         settings: {
           where: { year },
