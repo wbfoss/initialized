@@ -90,6 +90,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const summary = yearStats?.summaryJson as SummaryStats | undefined;
   const needsRefresh = !yearStats;
@@ -100,6 +101,14 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleLogout = () => {
+    setIsLoggingOut(true);
+    // Wait for animation to complete before signing out
+    setTimeout(() => {
+      signOut({ callbackUrl: '/' });
+    }, 2500);
+  };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -135,6 +144,10 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
 
   if (!mounted) {
     return <LcarsLoadingScreen username={user.username} />;
+  }
+
+  if (isLoggingOut) {
+    return <LcarsLogoutAnimation username={user.username} />;
   }
 
   if (needsRefresh) {
@@ -564,7 +577,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
                   <Settings className="h-3 w-3" />
                 </LcarsButton>
                 <div className="w-px h-6 bg-[#cc6666]/30 mx-1" />
-                <LcarsButton onClick={() => signOut({ callbackUrl: '/' })} color="#cc6666" title="Logout">
+                <LcarsButton onClick={handleLogout} color="#cc6666" title="Logout">
                   <LogOut className="h-3 w-3" />
                 </LcarsButton>
               </div>
@@ -824,6 +837,190 @@ function LcarsLoadingScreen({ username }: { username: string }) {
         </div>
         <div className="w-56 bg-[#22d3ee] rounded-tl-[50px]" />
       </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LOGOUT ANIMATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+function LcarsLogoutAnimation({ username }: { username: string }) {
+  const [phase, setPhase] = useState(0);
+  const [shutdownProgress, setShutdownProgress] = useState(100);
+
+  useEffect(() => {
+    // Phase transitions
+    const phase1 = setTimeout(() => setPhase(1), 300);
+    const phase2 = setTimeout(() => setPhase(2), 800);
+    const phase3 = setTimeout(() => setPhase(3), 1500);
+    const phase4 = setTimeout(() => setPhase(4), 2000);
+
+    // Countdown progress
+    const progressInterval = setInterval(() => {
+      setShutdownProgress(p => Math.max(0, p - 4));
+    }, 100);
+
+    return () => {
+      clearTimeout(phase1);
+      clearTimeout(phase2);
+      clearTimeout(phase3);
+      clearTimeout(phase4);
+      clearInterval(progressInterval);
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-black flex flex-col font-mono overflow-hidden">
+      {/* Animated red alert bars */}
+      <div
+        className={`absolute top-0 left-0 right-0 h-2 bg-[#cc6666] transition-all duration-300 ${
+          phase >= 1 ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          animation: phase >= 1 ? 'pulse 0.5s ease-in-out infinite' : 'none'
+        }}
+      />
+      <div
+        className={`absolute bottom-0 left-0 right-0 h-2 bg-[#cc6666] transition-all duration-300 ${
+          phase >= 1 ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          animation: phase >= 1 ? 'pulse 0.5s ease-in-out infinite' : 'none'
+        }}
+      />
+
+      {/* Scan lines with increased intensity */}
+      <div
+        className="pointer-events-none fixed inset-0 z-50"
+        style={{
+          background: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(204,102,102,0.1) 2px, rgba(204,102,102,0.1) 4px)`,
+          opacity: phase >= 2 ? 0.15 : 0.03
+        }}
+      />
+
+      {/* Top bar - collapsing */}
+      <div
+        className={`flex transition-all duration-500 ${
+          phase >= 3 ? 'h-0 opacity-0' : 'h-20'
+        }`}
+      >
+        <div className="w-56 bg-[#cc6666] rounded-br-[50px] flex items-center justify-end pr-8">
+          <span className="text-black font-bold tracking-widest">ALERT</span>
+        </div>
+        <div className="flex-1 bg-gradient-to-r from-[#cc6666] via-[#9370db] to-[#cc6666] flex items-center px-8">
+          <span className="text-black font-bold tracking-[0.3em] text-sm animate-pulse">
+            SESSION TERMINATING
+          </span>
+        </div>
+        <div className="w-56 bg-[#cc6666] rounded-bl-[50px] flex items-center pl-8">
+          <span className="text-black font-bold">{shutdownProgress}%</span>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 flex items-center justify-center">
+        <div className={`text-center transition-all duration-500 ${phase >= 4 ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`}>
+          {/* Collapsing circles */}
+          <div className="relative w-48 h-48 mx-auto mb-8">
+            {/* Outer ring - shrinking */}
+            <div
+              className={`absolute inset-0 border-4 border-[#cc6666] rounded-full transition-all duration-1000 ${
+                phase >= 2 ? 'scale-50 opacity-0' : 'scale-100 opacity-100'
+              }`}
+              style={{ animation: 'spin 2s linear infinite reverse' }}
+            />
+            {/* Middle ring */}
+            <div
+              className={`absolute inset-4 border-2 border-[#9370db] rounded-full transition-all duration-700 ${
+                phase >= 2 ? 'scale-0 opacity-0' : 'scale-100 opacity-100'
+              }`}
+              style={{ animation: 'spin 3s linear infinite' }}
+            />
+            {/* Inner ring */}
+            <div
+              className={`absolute inset-8 border-2 border-[#f59e0b] rounded-full transition-all duration-500 ${
+                phase >= 1 ? 'scale-75' : 'scale-100'
+              }`}
+            />
+            {/* Center content */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className={`transition-all duration-500 ${phase >= 3 ? 'scale-0' : 'scale-100'}`}>
+                <LogOut className={`h-16 w-16 text-[#cc6666] transition-all duration-300 ${
+                  phase >= 1 ? 'animate-pulse' : ''
+                }`} />
+              </div>
+            </div>
+          </div>
+
+          {/* Progress bar - depleting */}
+          <div className="w-80 mx-auto mb-6">
+            <div className="h-3 bg-black/50 border border-[#cc6666]/30 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#cc6666] to-[#9370db] transition-all duration-100"
+                style={{ width: `${shutdownProgress}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Status messages */}
+          <div className="space-y-2">
+            <div className={`text-[#cc6666] uppercase tracking-[0.4em] text-sm transition-opacity duration-300 ${
+              phase >= 0 ? 'opacity-100' : 'opacity-0'
+            }`}>
+              Disconnecting @{username}
+            </div>
+            <div className={`text-[#9370db] uppercase tracking-[0.3em] text-xs transition-opacity duration-300 ${
+              phase >= 1 ? 'opacity-100' : 'opacity-0'
+            }`}>
+              Clearing session data...
+            </div>
+            <div className={`text-[#f59e0b] uppercase tracking-[0.3em] text-xs transition-opacity duration-300 ${
+              phase >= 2 ? 'opacity-100' : 'opacity-0'
+            }`}>
+              Securing connection...
+            </div>
+            <div className={`text-[#22d3ee] uppercase tracking-[0.3em] text-xs transition-opacity duration-300 ${
+              phase >= 3 ? 'opacity-100' : 'opacity-0'
+            }`}>
+              Goodbye, Commander
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom bar - collapsing */}
+      <div
+        className={`flex transition-all duration-500 ${
+          phase >= 3 ? 'h-0 opacity-0' : 'h-16'
+        }`}
+      >
+        <div className="w-56 bg-[#cc6666] rounded-tr-[50px]" />
+        <div className="flex-1 bg-gradient-to-r from-[#cc6666] via-[#9370db] to-[#cc6666] flex items-center justify-center">
+          <span className="text-black font-bold tracking-[0.2em] text-xs">
+            SESSION ENDING // STARDATE {new Date().getFullYear()}.{Math.floor((Date.now() % 31536000000) / 86400000).toString().padStart(3, '0')}
+          </span>
+        </div>
+        <div className="w-56 bg-[#cc6666] rounded-tl-[50px]" />
+      </div>
+
+      {/* Final flash effect */}
+      <div
+        className={`absolute inset-0 bg-white transition-opacity duration-200 pointer-events-none ${
+          phase >= 4 ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+
+      <style jsx>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
     </div>
   );
 }
