@@ -86,7 +86,6 @@ interface SummaryStats {
 
 export function DashboardClient({ user, yearStats, achievements, settings }: DashboardProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [leftPanelOpen, setLeftPanelOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [bottomPanelOpen, setBottomPanelOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -234,45 +233,35 @@ export function DashboardClient({ user, yearStats, achievements, settings }: Das
             </div>
           </div>
 
-          {/* LEFT PANEL - Stats */}
-          <div className={`absolute left-0 top-28 bottom-20 z-20 transition-transform duration-300 ${leftPanelOpen ? 'translate-x-0' : '-translate-x-[calc(100%-3rem)]'}`}>
-            <div className="flex h-full">
-              <div className="w-72 bg-black/90 border-r-4 border-amber-500 backdrop-blur-md">
-                {/* Panel Header */}
-                <div className="bg-amber-500 px-4 py-2">
-                  <span className="font-mono text-sm font-bold text-black uppercase tracking-wider">Operations Data</span>
-                </div>
+          {/* LEFT PANEL - Stats (Always Visible) */}
+          <div className="absolute left-0 top-28 bottom-20 z-20">
+            <div className="h-full w-64 bg-black/80 border-r-4 border-amber-500 backdrop-blur-md">
+              {/* Panel Header */}
+              <div className="bg-amber-500 px-4 py-2">
+                <span className="font-mono text-sm font-bold text-black uppercase tracking-wider">Operations Data</span>
+              </div>
 
-                <div className="p-4 space-y-4">
-                  <LcarsStatRow icon={<GitCommit />} label="Commits" value={summary?.totalCommits || 0} color="amber" />
-                  <LcarsStatRow icon={<GitPullRequest />} label="Pull Requests" value={summary?.totalPRs || 0} color="sky" />
-                  <LcarsStatRow icon={<AlertCircle />} label="Issues" value={summary?.totalIssues || 0} color="amber" />
-                  <LcarsStatRow icon={<Star />} label="Stars Earned" value={summary?.totalStarsEarned || 0} color="sky" />
-                  <LcarsStatRow icon={<Flame />} label="Current Streak" value={summary?.currentStreak || 0} color="orange" />
+              <div className="p-4 space-y-3 overflow-y-auto max-h-[calc(100%-3rem)]">
+                <LcarsStatRow icon={<GitCommit />} label="Commits" value={summary?.totalCommits || 0} color="amber" />
+                <LcarsStatRow icon={<GitPullRequest />} label="Pull Requests" value={summary?.totalPRs || 0} color="sky" />
+                <LcarsStatRow icon={<AlertCircle />} label="Issues" value={summary?.totalIssues || 0} color="amber" />
+                <LcarsStatRow icon={<Star />} label="Stars Earned" value={summary?.totalStarsEarned || 0} color="sky" />
+                <LcarsStatRow icon={<Flame />} label="Current Streak" value={summary?.currentStreak || 0} color="orange" />
 
-                  {/* Languages */}
-                  <div className="pt-4 border-t border-amber-500/30">
-                    <p className="font-mono text-[10px] text-amber-500 uppercase tracking-widest mb-3">Language Matrix</p>
-                    <div className="space-y-2">
-                      {yearStats?.languages.slice(0, 5).map((lang) => (
-                        <div key={lang.language} className="flex items-center gap-2">
-                          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: lang.color || '#f59e0b' }} />
-                          <span className="font-mono text-xs text-zinc-300 flex-1">{lang.language}</span>
-                          <span className="font-mono text-xs text-amber-500">{lang.contributionShare.toFixed(1)}%</span>
-                        </div>
-                      ))}
-                    </div>
+                {/* Languages */}
+                <div className="pt-3 border-t border-amber-500/30">
+                  <p className="font-mono text-[10px] text-amber-500 uppercase tracking-widest mb-3">Language Matrix</p>
+                  <div className="space-y-2">
+                    {yearStats?.languages.slice(0, 5).map((lang) => (
+                      <div key={lang.language} className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: lang.color || '#f59e0b' }} />
+                        <span className="font-mono text-xs text-zinc-300 flex-1">{lang.language}</span>
+                        <span className="font-mono text-xs text-amber-500">{lang.contributionShare.toFixed(1)}%</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
-
-              {/* Toggle Button */}
-              <button
-                onClick={() => setLeftPanelOpen(!leftPanelOpen)}
-                className="h-24 w-12 self-center bg-amber-500 hover:bg-amber-400 flex items-center justify-center rounded-r-lg transition-colors"
-              >
-                {leftPanelOpen ? <ChevronLeft className="h-6 w-6 text-black" /> : <ChevronRight className="h-6 w-6 text-black" />}
-              </button>
             </div>
           </div>
 
