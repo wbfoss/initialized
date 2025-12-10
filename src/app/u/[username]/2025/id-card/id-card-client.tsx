@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Share2, Check, Download, ArrowLeft, Github, LayoutDashboard, Sparkles } from 'lucide-react';
+import { Share2, Check, Download, ArrowLeft, Github, LayoutDashboard, Sparkles, Trophy } from 'lucide-react';
 import { calculateClearanceLevel } from '@/lib/github';
 
 interface IDCardClientProps {
@@ -27,6 +27,10 @@ interface IDCardClientProps {
     isOwnCard: boolean;
     username: string | null;
   };
+  achievements: Array<{
+    code: string;
+    name: string;
+  }>;
 }
 
 function getDivision(languages: string[]): { name: string; color: string } {
@@ -43,7 +47,7 @@ function getDivision(languages: string[]): { name: string; color: string } {
   return { name: 'COMMAND', color: '#f59e0b' }; // Gold default
 }
 
-export function IDCardClient({ user, stats, viewer }: IDCardClientProps) {
+export function IDCardClient({ user, stats, viewer, achievements }: IDCardClientProps) {
   const [copied, setCopied] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -171,20 +175,29 @@ export function IDCardClient({ user, stats, viewer }: IDCardClientProps) {
               </div>
             </div>
 
-            {/* Specializations */}
-            {stats.topLanguages.length > 0 && (
+            {/* Commendations */}
+            {achievements.length > 0 && (
               <div className="mt-4">
-                <div className="text-[9px] text-gray-500 tracking-widest mb-2">SPECIALIZATIONS</div>
+                <div className="text-[9px] text-gray-500 tracking-widest mb-2">COMMENDATIONS</div>
                 <div className="flex gap-2 flex-wrap">
-                  {stats.topLanguages.slice(0, 3).map((lang) => (
+                  {achievements.slice(0, 4).map((achievement) => (
                     <span
-                      key={lang}
-                      className="px-2 py-1 text-[10px] font-bold tracking-wider rounded"
+                      key={achievement.code}
+                      className="flex items-center gap-1 px-2 py-1 text-[9px] font-bold tracking-wider rounded"
                       style={{ backgroundColor: `${division.color}20`, color: division.color }}
                     >
-                      {lang.toUpperCase()}
+                      <Trophy className="h-2.5 w-2.5" />
+                      {achievement.name}
                     </span>
                   ))}
+                  {achievements.length > 4 && (
+                    <span
+                      className="px-2 py-1 text-[9px] font-bold tracking-wider rounded"
+                      style={{ backgroundColor: '#9370db20', color: '#9370db' }}
+                    >
+                      +{achievements.length - 4} MORE
+                    </span>
+                  )}
                 </div>
               </div>
             )}

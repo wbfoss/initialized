@@ -96,11 +96,17 @@ export default async function IDCardPage({ params }: PageProps) {
     },
   });
 
-  // Get achievements count
-  const achievementCount = await prisma.userAchievement.count({
+  // Get achievements with details
+  const achievements = await prisma.userAchievement.findMany({
     where: {
       userId: user.id,
       year: 2025,
+    },
+    include: {
+      achievement: true,
+    },
+    orderBy: {
+      earnedAt: 'desc',
     },
   });
 
@@ -127,9 +133,13 @@ export default async function IDCardPage({ params }: PageProps) {
         totalContributions: summary?.totalContributions || 0,
         totalCommits: summary?.totalCommits || 0,
         longestStreak: summary?.longestStreak || 0,
-        achievementCount,
+        achievementCount: achievements.length,
         topLanguages: yearStats?.languages.map(l => l.language) || [],
       }}
+      achievements={achievements.map(a => ({
+        code: a.achievement.code,
+        name: a.achievement.name,
+      }))}
       viewer={{
         isLoggedIn,
         isOwnCard,
