@@ -291,7 +291,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
       {/* ═══════════════════════════════════════════════════════════════════
           LEFT SIDEBAR
           ═══════════════════════════════════════════════════════════════════ */}
-      <div className="absolute left-0 top-[88px] bottom-[88px] w-64 z-20 flex">
+      <div className="absolute left-0 top-[88px] bottom-[72px] w-52 z-20 flex">
         {/* Left Edge Bar */}
         <div className="w-8 bg-[#f59e0b] flex flex-col">
           <div className="h-12 bg-[#cc6666] rounded-br-[20px]" />
@@ -381,7 +381,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
       {/* ═══════════════════════════════════════════════════════════════════
           RIGHT SIDEBAR
           ═══════════════════════════════════════════════════════════════════ */}
-      <div className="absolute right-0 top-[88px] bottom-[88px] w-64 z-20 flex">
+      <div className="absolute right-0 top-[88px] bottom-[72px] w-52 z-20 flex">
         {/* Right Panel Content */}
         <div className="flex-1 bg-black/80 backdrop-blur-sm border-l-4 border-[#9370db] overflow-y-auto">
           {/* Section: Commendations */}
@@ -487,46 +487,22 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
       {/* ═══════════════════════════════════════════════════════════════════
           CENTER MAIN DISPLAY - Minimal overlay to show more galaxy
           ═══════════════════════════════════════════════════════════════════ */}
-      <div className="absolute left-64 right-64 top-[96px] bottom-[96px] z-10 flex flex-col pointer-events-none">
-        {/* Top: Transmission Header + Big Number */}
-        <div className="flex flex-col items-center pt-4 pointer-events-auto">
-          {/* Transmission Header */}
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex gap-1">
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-2 h-2 rounded-full bg-[#22d3ee] animate-pulse"
-                  style={{ animationDelay: `${i * 150}ms` }}
-                />
-              ))}
-            </div>
-            <Radio className="h-4 w-4 text-[#22d3ee] animate-pulse" />
-            <span className="text-[#22d3ee] uppercase tracking-[0.3em] text-[10px]">Mission Report Active</span>
-            <div className="flex gap-1">
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-2 h-2 rounded-full bg-[#22d3ee] animate-pulse"
-                  style={{ animationDelay: `${(4 - i) * 150}ms` }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Big Number Display - More transparent */}
+      <div className="absolute left-52 right-52 top-[88px] bottom-[72px] z-10 flex flex-col pointer-events-none">
+        {/* Top: Big Number Only */}
+        <div className="flex flex-col items-center pt-2 pointer-events-auto">
+          {/* Big Number Display - Smaller */}
           <div className="text-center">
             <div
-              className="text-[100px] font-bold leading-none tabular-nums tracking-tight"
+              className="text-[56px] font-bold leading-none tabular-nums tracking-tight"
               style={{
                 color: '#f59e0b',
-                textShadow: '0 0 40px rgba(245, 158, 11, 0.5), 0 0 80px rgba(245, 158, 11, 0.3)'
+                textShadow: '0 0 30px rgba(245, 158, 11, 0.4), 0 0 60px rgba(245, 158, 11, 0.2)'
               }}
             >
               {(summary?.totalContributions || 0).toLocaleString()}
             </div>
-            <div className="text-[#9370db] uppercase tracking-[0.5em] text-xs mt-1">
-              Total Contributions
+            <div className="text-[#9370db] uppercase tracking-[0.4em] text-[10px] mt-1">
+              Contributions
             </div>
           </div>
         </div>
@@ -534,147 +510,186 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
         {/* Spacer - lets the galaxy show through */}
         <div className="flex-1" />
 
-        {/* Bottom: Contribution Graph - Compact */}
-        <div className="flex justify-center pb-4 pointer-events-auto">
-          <div className="w-full max-w-md">
-            <div className="bg-black/40 backdrop-blur-sm border border-[#f59e0b]/20 rounded-lg p-3">
-              <div className="text-[9px] text-[#f59e0b] uppercase tracking-widest mb-2">
-                Contribution Frequency
-              </div>
-              <div className="flex items-end justify-between gap-[2px]" style={{ height: '48px' }}>
-                {(summary?.contributionsByMonth || Array(12).fill({ count: 0 })).map((m, i) => {
-                  const monthlyData = summary?.contributionsByMonth || [];
-                  const maxCount = monthlyData.length > 0
-                    ? Math.max(...monthlyData.map(x => x.count), 1)
-                    : 1;
-                  const barHeight = maxCount > 0 ? Math.max(4, (m.count / maxCount) * 40) : 4;
-                  return (
-                    <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                      <div
-                        className="w-full rounded-t transition-all duration-500"
-                        style={{
-                          height: `${barHeight}px`,
-                          backgroundColor: i % 2 === 0 ? '#f59e0b' : '#9370db',
-                          minHeight: '4px'
-                        }}
-                      />
-                      <span className="text-[7px] text-[#ffebb8]/40 mt-0.5">
-                        {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][i]}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+        {/* Bottom: Line Chart - Ultra Compact */}
+        <div className="flex justify-center pb-2 pointer-events-auto">
+          <div className="w-full max-w-sm">
+            <svg viewBox="0 0 200 32" className="w-full h-8">
+              {/* Grid lines */}
+              <line x1="0" y1="28" x2="200" y2="28" stroke="#f59e0b" strokeOpacity="0.2" strokeWidth="0.5" />
+              <line x1="0" y1="14" x2="200" y2="14" stroke="#f59e0b" strokeOpacity="0.1" strokeWidth="0.5" strokeDasharray="2,2" />
+
+              {/* Line chart */}
+              {(() => {
+                const monthlyData = summary?.contributionsByMonth || Array(12).fill({ count: 0 });
+                const maxCount = Math.max(...monthlyData.map(x => x.count), 1);
+                const points = monthlyData.map((m, i) => {
+                  const x = 8 + (i * 16.5);
+                  const y = 26 - (m.count / maxCount) * 22;
+                  return `${x},${y}`;
+                }).join(' ');
+
+                return (
+                  <>
+                    {/* Glow effect */}
+                    <polyline
+                      points={points}
+                      fill="none"
+                      stroke="#f59e0b"
+                      strokeWidth="3"
+                      strokeOpacity="0.3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    {/* Main line */}
+                    <polyline
+                      points={points}
+                      fill="none"
+                      stroke="url(#lineGradient)"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    {/* Data points */}
+                    {monthlyData.map((m, i) => {
+                      const x = 8 + (i * 16.5);
+                      const y = 26 - (m.count / maxCount) * 22;
+                      return (
+                        <circle
+                          key={i}
+                          cx={x}
+                          cy={y}
+                          r="2"
+                          fill={i % 2 === 0 ? '#f59e0b' : '#9370db'}
+                        />
+                      );
+                    })}
+                  </>
+                );
+              })()}
+
+              {/* Gradient definition */}
+              <defs>
+                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#f59e0b" />
+                  <stop offset="50%" stopColor="#22d3ee" />
+                  <stop offset="100%" stopColor="#9370db" />
+                </linearGradient>
+              </defs>
+
+              {/* Month labels */}
+              {['J','F','M','A','M','J','J','A','S','O','N','D'].map((m, i) => (
+                <text
+                  key={i}
+                  x={8 + (i * 16.5)}
+                  y="31"
+                  textAnchor="middle"
+                  fill="#ffebb8"
+                  fillOpacity="0.3"
+                  fontSize="5"
+                  fontFamily="monospace"
+                >
+                  {m}
+                </text>
+              ))}
+            </svg>
           </div>
         </div>
 
         {/* Interactive hint */}
-        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 text-[9px] text-[#22d3ee]/50 uppercase tracking-widest flex items-center gap-2 pointer-events-none">
-          <span>Drag to explore</span>
-          <span className="text-[#f59e0b]/50">•</span>
-          <span>Scroll to zoom</span>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[8px] text-[#22d3ee]/40 uppercase tracking-widest flex items-center gap-2 pointer-events-none">
+          <span>Drag</span>
+          <span className="text-[#f59e0b]/40">•</span>
+          <span>Zoom</span>
         </div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          BOTTOM LCARS FRAME
+          BOTTOM LCARS FRAME - Compact
           ═══════════════════════════════════════════════════════════════════ */}
       <div className="absolute bottom-0 left-0 right-0 z-30">
-        {/* Bottom data bars */}
-        <div className="h-4 flex gap-[2px] px-8 pb-1">
-          {[...Array(60)].map((_, i) => (
-            <div
-              key={i}
-              className="flex-1 rounded-sm"
-              style={{
-                backgroundColor: i % 4 === 0 ? '#f59e0b' : i % 4 === 1 ? '#9370db' : i % 4 === 2 ? '#cc6666' : '#22d3ee',
-                opacity: 0.2 + Math.abs(30 - i) / 60
-              }}
-            />
-          ))}
-        </div>
-
-        <div className="flex">
+        <div className="flex h-[72px]">
           {/* Bottom-Left Corner Elbow */}
-          <div className="flex flex-col-reverse">
-            <div className="h-16 w-48 bg-[#cc6666] rounded-tr-[50px] flex items-center justify-end pr-6">
-              <span className="text-black text-[10px] font-bold tracking-widest">INITIALIZED.DEV</span>
-            </div>
-            <div className="h-12 w-8 bg-[#cc6666]" />
+          <div className="w-36 bg-[#cc6666] rounded-tr-[30px] flex items-center justify-end pr-4">
+            <span className="text-black text-[8px] font-bold tracking-widest">INITIALIZED.DEV</span>
           </div>
 
-          {/* Bottom Bar */}
-          <div className="flex-1 bg-black/80 border-t-4 border-[#cc6666] backdrop-blur-sm">
-            <div className="flex items-center justify-between px-6 py-3">
-              {/* Left: Crew avatars */}
-              <div className="flex items-center gap-3">
-                <span className="text-[9px] text-[#f59e0b] uppercase tracking-widest">Crew</span>
-                <div className="flex -space-x-1.5">
-                  {yearStats?.collaborators.slice(0, 5).map((collab) => (
-                    <Avatar key={collab.username} className="h-7 w-7 border-2 border-[#f59e0b]">
-                      <AvatarImage src={collab.avatarUrl || undefined} />
-                      <AvatarFallback className="bg-[#f59e0b]/20 text-[#f59e0b] text-[8px]">
-                        {collab.username?.[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))}
-                </div>
-              </div>
-
-              {/* Center: Action buttons */}
-              <div className="flex items-center gap-2">
-                <LcarsButton onClick={handleRefresh} disabled={isRefreshing} color="#22d3ee" title="Refresh">
-                  <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">REFRESH</span>
-                </LcarsButton>
-                <LcarsButton onClick={copyShareLink} color="#f59e0b" title="Share">
-                  {copied ? <Check className="h-3 w-3" /> : <Share2 className="h-3 w-3" />}
-                  <span className="hidden sm:inline">{copied ? 'COPIED' : 'SHARE'}</span>
-                </LcarsButton>
-                <Link
-                  href={`/u/${user.username}/2025/id-card`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#cc6666] text-black text-[10px] font-bold uppercase tracking-widest rounded-full transition-all hover:opacity-80"
-                  title="ID Card"
-                >
-                  <IdCard className="h-3 w-3" />
-                  <span className="hidden sm:inline">ID CARD</span>
-                </Link>
-                <LcarsButton onClick={toggleFullscreen} color="#9370db" title="Fullscreen">
-                  <Maximize className="h-3 w-3" />
-                </LcarsButton>
-                <LcarsButton onClick={() => setIsMuted(!isMuted)} color="#22d3ee" title="Sound">
-                  {isMuted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
-                </LcarsButton>
-                <LcarsButton onClick={() => window.location.href = '/settings'} color="#f59e0b" title="Settings">
-                  <Settings className="h-3 w-3" />
-                </LcarsButton>
-                <div className="w-px h-6 bg-[#cc6666]/30 mx-1" />
-                <LcarsButton onClick={handleLogout} color="#cc6666" title="Logout">
-                  <LogOut className="h-3 w-3" />
-                </LcarsButton>
-              </div>
-
-              {/* Right: User info & status */}
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <div className="text-[10px] text-[#22d3ee]">{user.username}</div>
-                  <div className="text-[8px] text-[#f59e0b]/50">{clearance.title}</div>
-                </div>
-                <span className="text-[#22d3ee] flex items-center gap-1 text-[10px]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                  ONLINE
-                </span>
-              </div>
+          {/* Bottom Bar - Compact */}
+          <div className="flex-1 bg-black/70 border-t-2 border-[#cc6666] backdrop-blur-sm">
+            <div className="flex items-center justify-center gap-1.5 px-4 py-1.5">
+              {/* Compact Action buttons - icons only on small screens */}
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="flex items-center gap-1 px-2 py-1 bg-[#22d3ee] text-black text-[8px] font-bold uppercase tracking-wider rounded-full disabled:opacity-50 hover:opacity-80 cursor-pointer"
+                title="Refresh"
+              >
+                <RefreshCw className={`h-2.5 w-2.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden lg:inline">Refresh</span>
+              </button>
+              <button
+                onClick={copyShareLink}
+                className="flex items-center gap-1 px-2 py-1 bg-[#f59e0b] text-black text-[8px] font-bold uppercase tracking-wider rounded-full hover:opacity-80 cursor-pointer"
+                title="Share"
+              >
+                {copied ? <Check className="h-2.5 w-2.5" /> : <Share2 className="h-2.5 w-2.5" />}
+                <span className="hidden lg:inline">{copied ? 'Copied' : 'Share'}</span>
+              </button>
+              <Link
+                href={`/u/${user.username}/2025/id-card`}
+                className="flex items-center gap-1 px-2 py-1 bg-[#cc6666] text-black text-[8px] font-bold uppercase tracking-wider rounded-full hover:opacity-80"
+                title="ID Card"
+              >
+                <IdCard className="h-2.5 w-2.5" />
+                <span className="hidden lg:inline">ID</span>
+              </Link>
+              <button
+                onClick={toggleFullscreen}
+                className="flex items-center px-2 py-1 bg-[#9370db] text-black rounded-full hover:opacity-80 cursor-pointer"
+                title="Fullscreen"
+              >
+                <Maximize className="h-2.5 w-2.5" />
+              </button>
+              <button
+                onClick={() => setIsMuted(!isMuted)}
+                className="flex items-center px-2 py-1 bg-[#22d3ee]/70 text-black rounded-full hover:opacity-80 cursor-pointer"
+                title="Sound"
+              >
+                {isMuted ? <VolumeX className="h-2.5 w-2.5" /> : <Volume2 className="h-2.5 w-2.5" />}
+              </button>
+              <button
+                onClick={() => window.location.href = '/settings'}
+                className="flex items-center px-2 py-1 bg-[#f59e0b]/70 text-black rounded-full hover:opacity-80 cursor-pointer"
+                title="Settings"
+              >
+                <Settings className="h-2.5 w-2.5" />
+              </button>
+              <div className="w-px h-4 bg-[#cc6666]/30 mx-0.5" />
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-2 py-1 bg-[#cc6666]/80 text-black rounded-full hover:opacity-80 cursor-pointer"
+                title="Logout"
+              >
+                <LogOut className="h-2.5 w-2.5" />
+              </button>
+            </div>
+            {/* Data bars */}
+            <div className="h-2 flex gap-[1px] px-4">
+              {[...Array(50)].map((_, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-sm"
+                  style={{
+                    backgroundColor: i % 4 === 0 ? '#f59e0b' : i % 4 === 1 ? '#9370db' : i % 4 === 2 ? '#cc6666' : '#22d3ee',
+                    opacity: 0.3 + Math.abs(25 - i) / 50
+                  }}
+                />
+              ))}
             </div>
           </div>
 
           {/* Bottom-Right Corner Elbow */}
-          <div className="flex flex-col-reverse items-end">
-            <div className="h-16 w-48 bg-[#22d3ee] rounded-tl-[50px] flex items-center pl-6">
-              <span className="text-black text-[10px] font-bold tracking-widest">YEAR IN REVIEW</span>
-            </div>
-            <div className="h-12 w-8 bg-[#22d3ee]" />
+          <div className="w-36 bg-[#22d3ee] rounded-tl-[30px] flex items-center pl-4">
+            <span className="text-black text-[8px] font-bold tracking-widest">2025</span>
           </div>
         </div>
       </div>
