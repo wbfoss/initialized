@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 import { IDCardClient } from './id-card-client';
 
 interface PageProps {
@@ -50,6 +51,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function IDCardPage({ params }: PageProps) {
   const { username } = await params;
+  const session = await auth();
 
   // Find user (case-insensitive)
   const user = await prisma.user.findFirst({
@@ -108,6 +110,10 @@ export default async function IDCardPage({ params }: PageProps) {
     longestStreak?: number;
   } | null;
 
+  // Check if current viewer is logged in and if they're viewing their own card
+  const isLoggedIn = !!session?.user;
+  const isOwnCard = session?.user?.id === user.id;
+
   return (
     <IDCardClient
       user={{
@@ -123,6 +129,11 @@ export default async function IDCardPage({ params }: PageProps) {
         longestStreak: summary?.longestStreak || 0,
         achievementCount,
         topLanguages: yearStats?.languages.map(l => l.language) || [],
+      }}
+      viewer={{
+        isLoggedIn,
+        isOwnCard,
+        username: session?.user?.username || null,
       }}
     />
   );

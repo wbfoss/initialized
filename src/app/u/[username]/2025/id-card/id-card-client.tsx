@@ -2,8 +2,9 @@
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
+import { signIn } from 'next-auth/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Share2, Check, Download, ArrowLeft } from 'lucide-react';
+import { Share2, Check, Download, ArrowLeft, Github, LayoutDashboard, Sparkles } from 'lucide-react';
 import { calculateClearanceLevel } from '@/lib/github';
 
 interface IDCardClientProps {
@@ -21,6 +22,11 @@ interface IDCardClientProps {
     achievementCount: number;
     topLanguages: string[];
   };
+  viewer: {
+    isLoggedIn: boolean;
+    isOwnCard: boolean;
+    username: string | null;
+  };
 }
 
 function getDivision(languages: string[]): { name: string; color: string } {
@@ -37,7 +43,7 @@ function getDivision(languages: string[]): { name: string; color: string } {
   return { name: 'COMMAND', color: '#f59e0b' }; // Gold default
 }
 
-export function IDCardClient({ user, stats }: IDCardClientProps) {
+export function IDCardClient({ user, stats, viewer }: IDCardClientProps) {
   const [copied, setCopied] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -218,20 +224,42 @@ export function IDCardClient({ user, stats }: IDCardClientProps) {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 mt-6">
+      <div className="flex flex-wrap gap-3 mt-6 justify-center">
         <button
           onClick={copyShareLink}
-          className="flex items-center gap-2 px-6 py-3 bg-[#f59e0b] hover:bg-[#f59e0b]/80 text-black text-xs font-bold uppercase tracking-widest rounded-full transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#f59e0b] hover:bg-[#f59e0b]/80 text-black text-[10px] font-bold uppercase tracking-widest rounded-full transition-colors cursor-pointer"
         >
-          {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+          {copied ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
           {copied ? 'Copied!' : 'Share'}
         </button>
         <Link
           href={`/u/${user.username}/2025`}
-          className="flex items-center gap-2 px-6 py-3 bg-[#9370db] hover:bg-[#9370db]/80 text-black text-xs font-bold uppercase tracking-widest rounded-full transition-colors"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#9370db] hover:bg-[#9370db]/80 text-black text-[10px] font-bold uppercase tracking-widest rounded-full transition-colors"
         >
-          View Full Profile
+          View Profile
         </Link>
+
+        {/* Logged in user actions */}
+        {viewer.isLoggedIn && (
+          <Link
+            href="/2025"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#22d3ee] hover:bg-[#22d3ee]/80 text-black text-[10px] font-bold uppercase tracking-widest rounded-full transition-colors"
+          >
+            <LayoutDashboard className="h-3.5 w-3.5" />
+            Go to Dashboard
+          </Link>
+        )}
+
+        {/* Show "Claim Yours" for non-logged in visitors */}
+        {!viewer.isLoggedIn && (
+          <button
+            onClick={() => signIn('github', { callbackUrl: '/2025' })}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#22d3ee] to-[#9370db] hover:opacity-90 text-black text-[10px] font-bold uppercase tracking-widest rounded-full transition-all cursor-pointer animate-pulse hover:animate-none"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Claim Yours
+          </button>
+        )}
       </div>
 
       {/* Share URL Display */}
@@ -241,6 +269,21 @@ export function IDCardClient({ user, stats }: IDCardClientProps) {
           {shareUrl}
         </code>
       </div>
+
+      {/* Call to action for visitors */}
+      {!viewer.isLoggedIn && (
+        <div className="mt-6 text-center p-4 bg-gradient-to-r from-[#f59e0b]/10 via-[#9370db]/10 to-[#22d3ee]/10 rounded-lg border border-[#f59e0b]/20">
+          <div className="text-[#f59e0b] text-sm font-bold mb-1">Want your own Starfleet ID Card?</div>
+          <div className="text-gray-400 text-xs mb-3">Login with GitHub to generate your personalized ID card and explore your 2025 coding journey!</div>
+          <button
+            onClick={() => signIn('github', { callbackUrl: '/2025' })}
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-gray-100 text-black text-xs font-bold uppercase tracking-widest rounded-full transition-colors cursor-pointer"
+          >
+            <Github className="h-4 w-4" />
+            Login with GitHub
+          </button>
+        </div>
+      )}
     </div>
   );
 }
