@@ -166,10 +166,10 @@ export function IDCardClient({ user, stats, viewer, achievements }: IDCardClient
                   </div>
                 </div>
 
-                {/* Serial & Clearance */}
+                {/* Starfleet ID & Clearance */}
                 <div className="flex gap-4">
                   <div>
-                    <div className="text-[9px] text-gray-500 tracking-widest mb-1">SERIAL NO.</div>
+                    <div className="text-[9px] text-gray-500 tracking-widest mb-1">STARFLEET ID</div>
                     <div className="text-sm font-mono text-[#22d3ee]">{serialNumber}</div>
                   </div>
                   <div>
