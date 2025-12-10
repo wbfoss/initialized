@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
+import { APP_CONFIG } from '@/lib/config';
 import { PublicProfileClient } from './profile-client';
 
 interface PageProps {
@@ -51,6 +52,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function PublicProfile({ params }: PageProps) {
   const { username } = await params;
+  const year = APP_CONFIG.CURRENT_YEAR;
 
   // Find user (case-insensitive search)
   const user = await prisma.user.findFirst({
@@ -62,7 +64,7 @@ export default async function PublicProfile({ params }: PageProps) {
     },
     include: {
       settings: {
-        where: { year: 2025 },
+        where: { year },
       },
     },
   });
@@ -100,7 +102,7 @@ export default async function PublicProfile({ params }: PageProps) {
     where: {
       userId_year: {
         userId: user.id,
-        year: 2025,
+        year,
       },
     },
     include: {
@@ -153,7 +155,7 @@ export default async function PublicProfile({ params }: PageProps) {
   const achievements = await prisma.userAchievement.findMany({
     where: {
       userId: user.id,
-      year: 2025,
+      year,
     },
     include: {
       achievement: {

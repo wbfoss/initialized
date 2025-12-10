@@ -1,13 +1,14 @@
 // Zod schemas for API input validation
 import { z } from 'zod';
+import { APP_CONFIG } from './config';
 
 // Year validation (reasonable range for the app)
 const yearSchema = z
   .number()
   .int()
-  .min(2020)
-  .max(2030)
-  .default(2025);
+  .min(APP_CONFIG.MIN_YEAR)
+  .max(APP_CONFIG.MAX_YEAR)
+  .default(APP_CONFIG.CURRENT_YEAR);
 
 // Stats refresh request
 export const statsRefreshSchema = z.object({
@@ -33,9 +34,9 @@ export const yearQuerySchema = z.object({
   year: z
     .string()
     .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 2025))
-    .refine((n) => n >= 2020 && n <= 2030 && Number.isInteger(n), {
-      message: 'Year must be an integer between 2020 and 2030',
+    .transform((val) => (val ? parseInt(val, 10) : APP_CONFIG.CURRENT_YEAR))
+    .refine((n) => n >= APP_CONFIG.MIN_YEAR && n <= APP_CONFIG.MAX_YEAR && Number.isInteger(n), {
+      message: `Year must be an integer between ${APP_CONFIG.MIN_YEAR} and ${APP_CONFIG.MAX_YEAR}`,
     }),
 });
 

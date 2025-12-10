@@ -1,20 +1,25 @@
 // Token encryption utilities for secure storage of OAuth tokens
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
+import { getAuthSecret } from './config';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
 const SALT_LENGTH = 32;
 const KEY_LENGTH = 32;
 
+// Cache the encryption key to avoid repeated derivation
+let cachedKey: Buffer | null = null;
+
 // Derive encryption key from AUTH_SECRET
 function getEncryptionKey(): Buffer {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) {
-    throw new Error('AUTH_SECRET environment variable is required for token encryption');
+  if (cachedKey) {
+    return cachedKey;
   }
+  const secret = getAuthSecret();
   // Use a fixed salt derived from the secret itself for consistency
   const salt = scryptSync(secret, 'initialized-salt', SALT_LENGTH);
-  return scryptSync(secret, salt, KEY_LENGTH);
+  cachedKey = scryptSync(secret, salt, KEY_LENGTH);
+  return cachedKey;
 }
 
 /**

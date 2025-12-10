@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { APP_CONFIG } from '@/lib/config';
 import { DashboardClient } from './dashboard-client';
 
 export default async function Dashboard2025() {
@@ -19,12 +20,14 @@ export default async function Dashboard2025() {
     redirect('/');
   }
 
+  const year = APP_CONFIG.CURRENT_YEAR;
+
   // Get year stats
   const yearStats = await prisma.yearStats.findUnique({
     where: {
       userId_year: {
         userId: session.user.id,
-        year: 2025,
+        year,
       },
     },
     include: {
@@ -38,7 +41,7 @@ export default async function Dashboard2025() {
   const achievements = await prisma.userAchievement.findMany({
     where: {
       userId: session.user.id,
-      year: 2025,
+      year,
     },
     include: {
       achievement: true,
@@ -50,7 +53,7 @@ export default async function Dashboard2025() {
     where: {
       userId_year: {
         userId: session.user.id,
-        year: 2025,
+        year,
       },
     },
   });

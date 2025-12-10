@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth';
 import GitHub from 'next-auth/providers/github';
 import { prisma } from './prisma';
+import { encrypt } from './crypto';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -100,6 +101,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
 
         if (dbUser && account.access_token) {
+          // Encrypt tokens before storing
+          const encryptedAccessToken = encrypt(account.access_token);
+          const encryptedRefreshToken = account.refresh_token
+            ? encrypt(account.refresh_token)
+            : null;
+
           await prisma.oAuthAccount.upsert({
             where: {
               provider_providerAccountId: {
@@ -108,8 +115,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               },
             },
             update: {
-              accessToken: account.access_token,
-              refreshToken: account.refresh_token,
+              accessToken: encryptedAccessToken,
+              refreshToken: encryptedRefreshToken,
               expiresAt: account.expires_at
                 ? new Date(account.expires_at * 1000)
                 : null,
@@ -118,8 +125,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               userId: dbUser.id,
               provider: account.provider,
               providerAccountId: account.providerAccountId,
-              accessToken: account.access_token,
-              refreshToken: account.refresh_token,
+              accessToken: encryptedAccessToken,
+              refreshToken: encryptedRefreshToken,
               expiresAt: account.expires_at
                 ? new Date(account.expires_at * 1000)
                 : null,

@@ -1,8 +1,18 @@
 // GitHub API Service Layer
 // Handles all GitHub API interactions for fetching user stats
 
-const GITHUB_API_URL = 'https://api.github.com';
-const GITHUB_GRAPHQL_URL = 'https://api.github.com/graphql';
+import { APP_CONFIG } from './config';
+
+const GITHUB_API_URL = APP_CONFIG.GITHUB_API_URL;
+const GITHUB_GRAPHQL_URL = APP_CONFIG.GITHUB_GRAPHQL_URL;
+
+// Custom error for expired/invalid tokens
+export class GitHubTokenError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'GitHubTokenError';
+  }
+}
 
 // Types
 export interface UserCoreProfile {
@@ -95,6 +105,12 @@ async function githubRest<T>(
   });
 
   if (!response.ok) {
+    // Handle authentication errors specifically
+    if (response.status === 401 || response.status === 403) {
+      throw new GitHubTokenError(
+        'GitHub access token is invalid or expired. Please re-authenticate.'
+      );
+    }
     throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
   }
 
@@ -113,12 +129,26 @@ async function githubGraphQL<T>(query: string, token: string, variables?: object
   });
 
   if (!response.ok) {
+    // Handle authentication errors specifically
+    if (response.status === 401 || response.status === 403) {
+      throw new GitHubTokenError(
+        'GitHub access token is invalid or expired. Please re-authenticate.'
+      );
+    }
     throw new Error(`GitHub GraphQL error: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
   if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
-    throw new Error(`GitHub GraphQL error: ${data.errors[0]?.message || 'Unknown error'}`);
+    const errorMessage = data.errors[0]?.message || 'Unknown error';
+    // Check for auth-related errors in GraphQL response
+    if (errorMessage.toLowerCase().includes('unauthorized') ||
+        errorMessage.toLowerCase().includes('bad credentials')) {
+      throw new GitHubTokenError(
+        'GitHub access token is invalid or expired. Please re-authenticate.'
+      );
+    }
+    throw new Error(`GitHub GraphQL error: ${errorMessage}`);
   }
 
   return data.data;
@@ -154,8 +184,11 @@ export async function fetchUserOwnedOrgs(token: string): Promise<string[]> {
     }>(query, token, {});
 
     // Return orgs where user can administer (owner-level access)
+    if (!data.viewer?.organizations?.nodes) {
+      return [];
+    }
     return data.viewer.organizations.nodes
-      .filter((org) => org.viewerCanAdminister)
+      .filter((org) => org?.viewerCanAdminister)
       .map((org) => org.login.toLowerCase());
   } catch (error) {
     console.error('Error fetching user orgs:', error);
@@ -207,12 +240,17 @@ export async function fetchTotalOwnedRepoStars(
       { username, first: 100, after: cursor }
     );
 
-    for (const repo of data.user.repositories.nodes) {
-      totalStars += repo.stargazerCount;
+    // Handle null user response
+    if (!data.user?.repositories?.nodes) {
+      break;
     }
 
-    hasMore = data.user.repositories.pageInfo.hasNextPage;
-    cursor = data.user.repositories.pageInfo.endCursor;
+    for (const repo of data.user.repositories.nodes) {
+      totalStars += repo?.stargazerCount || 0;
+    }
+
+    hasMore = data.user.repositories.pageInfo?.hasNextPage || false;
+    cursor = data.user.repositories.pageInfo?.endCursor || null;
   }
 
   // 2. Fetch stars from org repos where user is admin
@@ -253,12 +291,17 @@ export async function fetchTotalOwnedRepoStars(
           { orgLogin, first: 100, after: orgCursor }
         );
 
-        for (const repo of orgData.organization.repositories.nodes) {
-          totalStars += repo.stargazerCount;
+        // Handle null organization response
+        if (!orgData.organization?.repositories?.nodes) {
+          break;
         }
 
-        orgHasMore = orgData.organization.repositories.pageInfo.hasNextPage;
-        orgCursor = orgData.organization.repositories.pageInfo.endCursor;
+        for (const repo of orgData.organization.repositories.nodes) {
+          totalStars += repo?.stargazerCount || 0;
+        }
+
+        orgHasMore = orgData.organization.repositories.pageInfo?.hasNextPage || false;
+        orgCursor = orgData.organization.repositories.pageInfo?.endCursor || null;
       } catch (error) {
         console.error(`Error fetching org repos for ${orgLogin}:`, error);
         break;
@@ -363,21 +406,36 @@ export async function fetchUserContributionsForYear(
 
   const collection = data.user.contributionsCollection;
 
+  // Handle null collection
+  if (!collection) {
+    return {
+      totalContributions: 0,
+      weeks: [],
+      restrictedContributionsCount: 0,
+      totalCommitContributions: 0,
+      totalPullRequestContributions: 0,
+      totalIssueContributions: 0,
+      commitTimestamps: [],
+    };
+  }
+
   // Extract commit timestamps for hour analysis
   const commitTimestamps: string[] = [];
   for (const repo of collection.commitContributionsByRepository ?? []) {
-    for (const commit of repo.contributions?.nodes ?? []) {
-      commitTimestamps.push(commit.occurredAt);
+    for (const commit of repo?.contributions?.nodes ?? []) {
+      if (commit?.occurredAt) {
+        commitTimestamps.push(commit.occurredAt);
+      }
     }
   }
 
   return {
-    totalContributions: collection.contributionCalendar.totalContributions,
-    weeks: collection.contributionCalendar.weeks ?? [],
-    restrictedContributionsCount: collection.restrictedContributionsCount,
-    totalCommitContributions: collection.totalCommitContributions,
-    totalPullRequestContributions: collection.totalPullRequestContributions,
-    totalIssueContributions: collection.totalIssueContributions,
+    totalContributions: collection.contributionCalendar?.totalContributions || 0,
+    weeks: collection.contributionCalendar?.weeks ?? [],
+    restrictedContributionsCount: collection.restrictedContributionsCount || 0,
+    totalCommitContributions: collection.totalCommitContributions || 0,
+    totalPullRequestContributions: collection.totalPullRequestContributions || 0,
+    totalIssueContributions: collection.totalIssueContributions || 0,
     commitTimestamps,
   };
 }
@@ -475,21 +533,27 @@ export async function fetchUserReposForYear(
 
     const repoData = result.user.repositoriesContributedTo;
 
+    // Handle null repoData
+    if (!repoData?.nodes) {
+      break;
+    }
+
     for (const repo of repoData.nodes) {
-      // Skip private repos if not included
-      if (repo.isPrivate && !includePrivate) continue;
+      // Skip null repos or private repos if not included
+      if (!repo || (repo.isPrivate && !includePrivate)) continue;
 
       // Check if user owns this repo (user's own repo OR org where user is admin)
-      const ownerLower = repo.owner.login.toLowerCase();
+      const ownerLower = repo.owner?.login?.toLowerCase() || '';
       const usernameLower = username.toLowerCase();
       const isOwner = ownerLower === usernameLower || ownedOrgs.includes(ownerLower);
 
       // Calculate language percentages
-      const totalSize = repo.languages.edges.reduce((sum, edge) => sum + edge.size, 0);
-      const languages = repo.languages.edges.map((edge) => ({
-        name: edge.node.name,
-        percentage: totalSize > 0 ? (edge.size / totalSize) * 100 : 0,
-        color: edge.node.color,
+      const languageEdges = repo.languages?.edges || [];
+      const totalSize = languageEdges.reduce((sum, edge) => sum + (edge?.size || 0), 0);
+      const languages = languageEdges.map((edge) => ({
+        name: edge?.node?.name || 'Unknown',
+        percentage: totalSize > 0 ? ((edge?.size || 0) / totalSize) * 100 : 0,
+        color: edge?.node?.color || null,
       }));
 
       repos.push({
@@ -509,8 +573,8 @@ export async function fetchUserReposForYear(
       });
     }
 
-    continueLoop = repoData.pageInfo.hasNextPage;
-    cursor = repoData.pageInfo.endCursor;
+    continueLoop = repoData.pageInfo?.hasNextPage || false;
+    cursor = repoData.pageInfo?.endCursor || null;
 
     // Limit to avoid rate limits
     if (repos.length >= 100) break;

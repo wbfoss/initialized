@@ -9,15 +9,26 @@ interface RateLimitEntry {
 // In-memory store (works for single instance, for multi-instance use Redis)
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
-// Clean up expired entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (entry.resetAt < now) {
-      rateLimitStore.delete(key);
+// Track if cleanup is already scheduled (avoid multiple intervals in serverless)
+let cleanupScheduled = false;
+
+function scheduleCleanup() {
+  if (cleanupScheduled) return;
+  cleanupScheduled = true;
+
+  // Clean up expired entries periodically
+  const cleanup = () => {
+    const now = Date.now();
+    for (const [key, entry] of rateLimitStore.entries()) {
+      if (entry.resetAt < now) {
+        rateLimitStore.delete(key);
+      }
     }
-  }
-}, 60000); // Clean every minute
+  };
+
+  // Run cleanup every minute, but only if there's something to clean
+  setInterval(cleanup, 60000);
+}
 
 export interface RateLimitConfig {
   maxRequests: number;
@@ -32,29 +43,36 @@ export interface RateLimitResult {
 
 /**
  * Check and update rate limit for a given identifier
+ * Uses atomic-style check to prevent race conditions
  */
 export function checkRateLimit(
   identifier: string,
   config: RateLimitConfig
 ): RateLimitResult {
+  scheduleCleanup();
+
   const now = Date.now();
   const entry = rateLimitStore.get(identifier);
 
   // If no entry or entry expired, create new one
   if (!entry || entry.resetAt < now) {
-    rateLimitStore.set(identifier, {
+    const newEntry: RateLimitEntry = {
       count: 1,
       resetAt: now + config.windowMs,
-    });
+    };
+    rateLimitStore.set(identifier, newEntry);
     return {
       success: true,
       remaining: config.maxRequests - 1,
-      resetAt: now + config.windowMs,
+      resetAt: newEntry.resetAt,
     };
   }
 
-  // Check if limit exceeded
-  if (entry.count >= config.maxRequests) {
+  // Atomically check and increment
+  // First check if we would exceed the limit
+  const newCount = entry.count + 1;
+
+  if (newCount > config.maxRequests) {
     return {
       success: false,
       remaining: 0,
@@ -62,11 +80,16 @@ export function checkRateLimit(
     };
   }
 
-  // Increment count
-  entry.count++;
+  // Update the count atomically by replacing the entire entry
+  const updatedEntry: RateLimitEntry = {
+    count: newCount,
+    resetAt: entry.resetAt,
+  };
+  rateLimitStore.set(identifier, updatedEntry);
+
   return {
     success: true,
-    remaining: config.maxRequests - entry.count,
+    remaining: config.maxRequests - newCount,
     resetAt: entry.resetAt,
   };
 }
@@ -96,6 +119,11 @@ export const RATE_LIMITS = {
   // General API - higher limit
   general: {
     maxRequests: 100,
+    windowMs: 60 * 1000, // 1 minute
+  },
+  // Public profile API - prevent scraping
+  publicProfile: {
+    maxRequests: 30,
     windowMs: 60 * 1000, // 1 minute
   },
 } as const;

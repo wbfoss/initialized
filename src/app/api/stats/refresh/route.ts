@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { decrypt, isEncrypted } from '@/lib/crypto';
+import { APP_CONFIG } from '@/lib/config';
 import {
   fetchUserCoreProfile,
   fetchUserContributionsForYear,
@@ -11,6 +13,7 @@ import {
   computeAggregatedYearStats,
   calculateAchievements,
   ACHIEVEMENTS,
+  GitHubTokenError,
 } from '@/lib/github';
 import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit';
 import { statsRefreshSchema, validateInput } from '@/lib/validations';
@@ -78,69 +81,80 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'GitHub account not linked' }, { status: 400 });
     }
 
+    // Validate access token exists
+    if (!account.accessToken) {
+      return NextResponse.json(
+        { error: 'GitHub access token missing. Please re-authenticate.' },
+        { status: 401 }
+      );
+    }
+
+    // Decrypt the access token (handle both encrypted and legacy unencrypted tokens)
+    let accessToken: string;
+    try {
+      accessToken = isEncrypted(account.accessToken)
+        ? decrypt(account.accessToken)
+        : account.accessToken;
+    } catch (decryptError) {
+      console.error('Failed to decrypt access token:', decryptError);
+      return NextResponse.json(
+        { error: 'Failed to decrypt access token. Please re-authenticate.' },
+        { status: 401 }
+      );
+    }
+
+    // Validate username exists
+    if (!user.username) {
+      return NextResponse.json(
+        { error: 'Username not found. Please re-authenticate.' },
+        { status: 400 }
+      );
+    }
+
     const includePrivate = user.settings[0]?.includePrivateRepos || false;
 
     // Fetch data from GitHub with individual error handling
     let profile, contributions, repos, collaborators, ownedOrgs, totalOwnedStars;
 
     try {
-      // First, fetch owned orgs (needed for repo ownership check and star count)
-      console.log('Fetching owned orgs...');
-      ownedOrgs = await fetchUserOwnedOrgs(account.accessToken);
-      console.log('Owned orgs fetched:', ownedOrgs.length);
+      ownedOrgs = await fetchUserOwnedOrgs(accessToken);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Failed to fetch owned orgs:', msg);
       return NextResponse.json({ error: `Failed to fetch orgs: ${msg}` }, { status: 502 });
     }
 
     try {
-      console.log('Fetching profile...');
-      profile = await fetchUserCoreProfile(account.accessToken);
-      console.log('Profile fetched:', profile.login);
+      profile = await fetchUserCoreProfile(accessToken);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Failed to fetch profile:', msg);
       return NextResponse.json({ error: `Failed to fetch profile: ${msg}` }, { status: 502 });
     }
 
     try {
-      console.log('Fetching contributions...');
-      contributions = await fetchUserContributionsForYear(account.accessToken, user.username, year);
-      console.log('Contributions fetched:', contributions.totalContributions);
+      contributions = await fetchUserContributionsForYear(accessToken, user.username, year);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Failed to fetch contributions:', msg);
       return NextResponse.json({ error: `Failed to fetch contributions: ${msg}` }, { status: 502 });
     }
 
     try {
-      console.log('Fetching repos...');
-      repos = await fetchUserReposForYear(account.accessToken, user.username, year, includePrivate, ownedOrgs);
-      console.log('Repos fetched:', repos.length);
+      repos = await fetchUserReposForYear(accessToken, user.username, year, includePrivate, ownedOrgs);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Failed to fetch repos:', msg);
       return NextResponse.json({ error: `Failed to fetch repos: ${msg}` }, { status: 502 });
     }
 
     try {
-      console.log('Fetching collaborators...');
-      collaborators = await fetchCollaboratorsForYear(account.accessToken, user.username, year);
-      console.log('Collaborators fetched:', collaborators.length);
+      collaborators = await fetchCollaboratorsForYear(accessToken, user.username, year);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Failed to fetch collaborators:', msg);
       return NextResponse.json({ error: `Failed to fetch collaborators: ${msg}` }, { status: 502 });
     }
 
     try {
-      console.log('Fetching total stars...');
-      totalOwnedStars = await fetchTotalOwnedRepoStars(account.accessToken, user.username, ownedOrgs);
-      console.log('Total stars fetched:', totalOwnedStars);
+      totalOwnedStars = await fetchTotalOwnedRepoStars(accessToken, user.username, ownedOrgs);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Failed to fetch stars:', msg);
       return NextResponse.json({ error: `Failed to fetch stars: ${msg}` }, { status: 502 });
     }
 
@@ -229,38 +243,43 @@ export async function POST(request: Request) {
         });
       }
 
-      // Upsert achievements
-      for (const code of earnedAchievementCodes) {
-        const achievementDef = ACHIEVEMENTS.find((a) => a.code === code);
-        if (!achievementDef) continue;
+      // Batch upsert achievements - first ensure all achievement definitions exist
+      const achievementDefsToCreate = earnedAchievementCodes
+        .map((code) => ACHIEVEMENTS.find((a) => a.code === code))
+        .filter((def): def is NonNullable<typeof def> => def !== undefined);
 
-        // Get or create the achievement
-        const achievement = await tx.achievement.upsert({
-          where: { code },
+      // Create all achievements that don't exist yet
+      for (const def of achievementDefsToCreate) {
+        await tx.achievement.upsert({
+          where: { code: def.code },
           update: {},
           create: {
-            code,
-            name: achievementDef.name,
-            description: achievementDef.description,
-            icon: achievementDef.icon,
+            code: def.code,
+            name: def.name,
+            description: def.description,
+            icon: def.icon,
           },
         });
+      }
 
-        // Link to user
-        await tx.userAchievement.upsert({
-          where: {
-            userId_achievementId_year: {
-              userId: user.id,
-              achievementId: achievement.id,
-              year,
-            },
-          },
-          update: {},
-          create: {
+      // Get all achievement IDs in one query
+      const achievements = await tx.achievement.findMany({
+        where: { code: { in: earnedAchievementCodes } },
+        select: { id: true, code: true },
+      });
+
+      // Delete old user achievements for this year and create new ones
+      await tx.userAchievement.deleteMany({
+        where: { userId: user.id, year },
+      });
+
+      if (achievements.length > 0) {
+        await tx.userAchievement.createMany({
+          data: achievements.map((achievement) => ({
             userId: user.id,
             achievementId: achievement.id,
             year,
-          },
+          })),
         });
       }
     });
@@ -280,6 +299,19 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error('Error refreshing stats:', error);
+
+    // Handle token expiration/invalid token errors
+    if (error instanceof GitHubTokenError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: 'TOKEN_EXPIRED',
+          requiresReauth: true,
+        },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Failed to refresh stats. Please try again.' },
       { status: 500 }

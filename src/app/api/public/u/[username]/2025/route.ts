@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit';
+import { usernameSchema, validateInput } from '@/lib/validations';
+import { APP_CONFIG } from '@/lib/config';
 
 interface RouteParams {
   params: Promise<{
@@ -10,7 +13,34 @@ interface RouteParams {
 export async function GET(request: Request, { params }: RouteParams) {
   try {
     const { username } = await params;
-    const year = 2025;
+    const year = APP_CONFIG.CURRENT_YEAR;
+
+    // Rate limiting by IP (for public endpoints)
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+    const rateLimitResult = checkRateLimit(
+      `public-profile:${ip}`,
+      RATE_LIMITS.publicProfile
+    );
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
+      );
+    }
+
+    // Validate username using shared schema
+    const validation = validateInput(usernameSchema, username);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Invalid username format' },
+        { status: 400, headers: getRateLimitHeaders(rateLimitResult) }
+      );
+    }
 
     // Find user by username (case-insensitive)
     const user = await prisma.user.findFirst({
@@ -30,7 +60,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
-        { status: 404 }
+        { status: 404, headers: getRateLimitHeaders(rateLimitResult) }
       );
     }
 
@@ -42,7 +72,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     if (!isPublic) {
       return NextResponse.json(
         { error: 'This profile is private' },
-        { status: 403 }
+        { status: 403, headers: getRateLimitHeaders(rateLimitResult) }
       );
     }
 
@@ -87,7 +117,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     if (!yearStats) {
       return NextResponse.json(
         { error: 'Stats not available' },
-        { status: 404 }
+        { status: 404, headers: getRateLimitHeaders(rateLimitResult) }
       );
     }
 
@@ -109,20 +139,23 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     });
 
-    return NextResponse.json({
-      user: {
-        username: user.username,
-        name: user.name,
-        avatarUrl: user.avatarUrl,
+    return NextResponse.json(
+      {
+        user: {
+          username: user.username,
+          name: user.name,
+          avatarUrl: user.avatarUrl,
+        },
+        year,
+        summary: yearStats.summaryJson,
+        repos: yearStats.repos,
+        languages: yearStats.languages,
+        collaborators: yearStats.collaborators,
+        achievements: achievements.map((ua) => ua.achievement),
+        themeVariant: settings?.themeVariant ?? 'nebula-blue',
       },
-      year,
-      summary: yearStats.summaryJson,
-      repos: yearStats.repos,
-      languages: yearStats.languages,
-      collaborators: yearStats.collaborators,
-      achievements: achievements.map((ua) => ua.achievement),
-      themeVariant: settings?.themeVariant ?? 'nebula-blue',
-    });
+      { headers: getRateLimitHeaders(rateLimitResult) }
+    );
   } catch (error) {
     console.error('Error fetching public profile:', error);
     return NextResponse.json(
