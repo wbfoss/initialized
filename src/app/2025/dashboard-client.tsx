@@ -525,26 +525,29 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
           </div>
 
           {/* Contribution Graph */}
-          <div className="w-full max-w-2xl mb-8">
+          <div className="w-full max-w-2xl">
             <div className="bg-black/60 border-2 border-[#f59e0b]/30 rounded-lg p-4">
               <div className="text-[10px] text-[#f59e0b] uppercase tracking-widest mb-3">
                 Contribution Frequency Analysis
               </div>
-              <div className="flex items-end justify-between gap-1 h-24">
+              <div className="flex items-end justify-between gap-1" style={{ height: '96px' }}>
                 {(summary?.contributionsByMonth || Array(12).fill({ count: 0 })).map((m, i) => {
-                  const maxCount = Math.max(...(summary?.contributionsByMonth?.map(x => x.count) || [1]));
-                  const height = maxCount > 0 ? Math.max(10, (m.count / maxCount) * 100) : 10;
+                  const monthlyData = summary?.contributionsByMonth || [];
+                  const maxCount = monthlyData.length > 0
+                    ? Math.max(...monthlyData.map(x => x.count), 1)
+                    : 1;
+                  const barHeight = maxCount > 0 ? Math.max(8, (m.count / maxCount) * 80) : 8;
                   return (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
                       <div
                         className="w-full rounded-t transition-all duration-500"
                         style={{
-                          height: `${height}%`,
+                          height: `${barHeight}px`,
                           backgroundColor: i % 2 === 0 ? '#f59e0b' : '#9370db',
-                          opacity: 0.6 + (height / 200)
+                          minHeight: '8px'
                         }}
                       />
-                      <span className="text-[8px] text-[#ffebb8]/40">
+                      <span className="text-[8px] text-[#ffebb8]/50 mt-1">
                         {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][i]}
                       </span>
                     </div>
@@ -552,14 +555,6 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
                 })}
               </div>
             </div>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-4 gap-4 w-full max-w-3xl">
-            <StatDisplay icon={<GitCommit className="h-5 w-5" />} label="COMMITS" value={summary?.totalCommits || 0} color="#f59e0b" />
-            <StatDisplay icon={<GitPullRequest className="h-5 w-5" />} label="PULL REQ" value={summary?.totalPRs || 0} color="#22d3ee" />
-            <StatDisplay icon={<AlertCircle className="h-5 w-5" />} label="ISSUES" value={summary?.totalIssues || 0} color="#9370db" />
-            <StatDisplay icon={<Flame className="h-5 w-5" />} label="STREAK" value={summary?.longestStreak || 0} color="#cc6666" suffix=" days" />
           </div>
         </div>
       </div>
