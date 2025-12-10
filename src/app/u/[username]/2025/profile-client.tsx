@@ -126,8 +126,8 @@ export function PublicProfileClient({
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black font-mono select-none">
-      {/* 3D Background Scene */}
-      <div className="absolute inset-0 z-0 opacity-40">
+      {/* 3D Background Scene - Full opacity to show galaxy */}
+      <div className="absolute inset-0 z-0">
         <DashboardScene
           totalContributions={summary.totalContributions}
           monthlyData={summary.contributionsByMonth || []}
@@ -393,78 +393,113 @@ export function PublicProfileClient({
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          CENTER MAIN DISPLAY
+          CENTER MAIN DISPLAY - Minimal overlay to show more galaxy
           ═══════════════════════════════════════════════════════════════════ */}
-      <div className="absolute left-52 right-52 top-[96px] bottom-[54px] z-10 flex flex-col p-4">
-        {/* Main Stats Display */}
-        <div className="flex-1 flex flex-col items-center justify-center">
-          {/* Transmission Header */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex gap-1">
-              {[...Array(5)].map((_, i) => (
-                <div
+      <div className="absolute left-52 right-52 top-[88px] bottom-[54px] z-10 flex flex-col pointer-events-none">
+        {/* Top: Personnel File Active indicator */}
+        <div className="flex justify-center pt-3">
+          <div className="flex items-center gap-2 px-4 py-1.5 bg-black/60 border border-[#22d3ee]/30 rounded-full">
+            <Radio className="h-3 w-3 text-[#22d3ee] animate-pulse" />
+            <span className="text-[10px] text-[#22d3ee] tracking-[0.2em] font-bold uppercase">
+              Personnel File Active
+            </span>
+            <Radio className="h-3 w-3 text-[#22d3ee] animate-pulse" />
+          </div>
+        </div>
+
+        {/* Spacer - lets the galaxy show through */}
+        <div className="flex-1" />
+
+        {/* Bottom: Line Chart - Ultra Compact */}
+        <div className="flex justify-center pb-2 pointer-events-auto">
+          <div className="w-full max-w-sm">
+            <svg viewBox="0 0 200 32" className="w-full h-8">
+              {/* Grid lines */}
+              <line x1="0" y1="28" x2="200" y2="28" stroke="#f59e0b" strokeOpacity="0.2" strokeWidth="0.5" />
+              <line x1="0" y1="14" x2="200" y2="14" stroke="#f59e0b" strokeOpacity="0.1" strokeWidth="0.5" strokeDasharray="2,2" />
+
+              {/* Line chart */}
+              {(() => {
+                const monthlyData = summary.contributionsByMonth || Array(12).fill({ count: 0 });
+                const maxCount = Math.max(...monthlyData.map(x => x.count), 1);
+                const points = monthlyData.map((m, i) => {
+                  const x = 8 + (i * 16.5);
+                  const y = 26 - (m.count / maxCount) * 22;
+                  return `${x},${y}`;
+                }).join(' ');
+
+                return (
+                  <>
+                    {/* Glow effect */}
+                    <polyline
+                      points={points}
+                      fill="none"
+                      stroke="#f59e0b"
+                      strokeWidth="3"
+                      strokeOpacity="0.3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    {/* Main line */}
+                    <polyline
+                      points={points}
+                      fill="none"
+                      stroke="url(#lineGradientPublic)"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    {/* Data points */}
+                    {monthlyData.map((m, i) => {
+                      const x = 8 + (i * 16.5);
+                      const y = 26 - (m.count / maxCount) * 22;
+                      return (
+                        <circle
+                          key={i}
+                          cx={x}
+                          cy={y}
+                          r="2"
+                          fill={i % 2 === 0 ? '#f59e0b' : '#9370db'}
+                        />
+                      );
+                    })}
+                  </>
+                );
+              })()}
+
+              {/* Gradient definition */}
+              <defs>
+                <linearGradient id="lineGradientPublic" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#f59e0b" />
+                  <stop offset="50%" stopColor="#22d3ee" />
+                  <stop offset="100%" stopColor="#9370db" />
+                </linearGradient>
+              </defs>
+
+              {/* Month labels */}
+              {['J','F','M','A','M','J','J','A','S','O','N','D'].map((m, i) => (
+                <text
                   key={i}
-                  className="w-2 h-2 rounded-full bg-[#22d3ee] animate-pulse"
-                  style={{ animationDelay: `${i * 150}ms` }}
-                />
+                  x={8 + (i * 16.5)}
+                  y="31"
+                  textAnchor="middle"
+                  fill="#ffebb8"
+                  fillOpacity="0.3"
+                  fontSize="5"
+                  fontFamily="monospace"
+                >
+                  {m}
+                </text>
               ))}
-            </div>
-            <Radio className="h-5 w-5 text-[#22d3ee] animate-pulse" />
-            <span className="text-[#22d3ee] uppercase tracking-[0.4em] text-xs">Personnel File Active</span>
-            <div className="flex gap-1">
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-2 h-2 rounded-full bg-[#22d3ee] animate-pulse"
-                  style={{ animationDelay: `${(4 - i) * 150}ms` }}
-                />
-              ))}
-            </div>
+            </svg>
           </div>
+        </div>
 
-          {/* Big Number Display */}
-          <div className="text-center mb-8">
-            <div className="text-[120px] font-bold text-[#f59e0b] leading-none tabular-nums tracking-tight">
-              {summary.totalContributions.toLocaleString()}
-            </div>
-            <div className="text-[#9370db] uppercase tracking-[0.5em] text-sm mt-2">
-              Total Contributions
-            </div>
-          </div>
-
-          {/* Contribution Graph */}
-          <div className="w-full max-w-2xl mb-8">
-            <div className="bg-black/60 border-2 border-[#f59e0b]/30 rounded-lg p-4">
-              <div className="text-[10px] text-[#f59e0b] uppercase tracking-widest mb-3">
-                Contribution Frequency Analysis
-              </div>
-              <div className="flex items-end justify-between gap-1 h-24">
-                {(summary.contributionsByMonth || Array(12).fill({ count: Math.random() * 100 })).map((m, i) => {
-                  const maxCount = Math.max(...(summary.contributionsByMonth?.map(x => x.count) || [100]));
-                  const targetHeight = Math.max(10, (m.count / maxCount) * 100);
-                  const displayHeight = barsAnimated ? targetHeight : 0;
-                  return (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                      <div
-                        className="w-full rounded-t transition-all ease-out"
-                        style={{
-                          height: `${displayHeight}%`,
-                          backgroundColor: i % 2 === 0 ? '#f59e0b' : '#9370db',
-                          opacity: 0.6 + (targetHeight / 200),
-                          transitionDuration: `${800 + i * 100}ms`,
-                          transitionDelay: `${i * 50}ms`
-                        }}
-                      />
-                      <span className="text-[8px] text-[#ffebb8]/40">
-                        {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][i]}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
+        {/* Interactive hint */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[8px] text-[#22d3ee]/40 uppercase tracking-widest flex items-center gap-2 pointer-events-none">
+          <span>Drag</span>
+          <span className="text-[#f59e0b]/40">•</span>
+          <span>Zoom</span>
         </div>
       </div>
 
