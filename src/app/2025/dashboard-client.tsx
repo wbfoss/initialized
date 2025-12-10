@@ -143,13 +143,17 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
   };
 
   const handleRefresh = async () => {
+    console.log('ENGAGE clicked - starting refresh');
     setIsRefreshing(true);
     try {
+      console.log('Calling /api/stats/refresh...');
       const response = await fetch('/api/stats/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ year: 2025 }),
       });
+
+      console.log('Response status:', response.status);
 
       if (!response.ok) {
         const data = await response.json();
@@ -158,6 +162,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
         return;
       }
 
+      console.log('Success! Reloading...');
       window.location.reload();
     } catch (error) {
       console.error('Failed to refresh:', error);
@@ -966,7 +971,11 @@ function LcarsSetupScreen({
             </p>
 
             <button
-              onClick={onRefresh}
+              type="button"
+              onClick={() => {
+                console.log('Button clicked!');
+                onRefresh();
+              }}
               disabled={isRefreshing}
               className="w-full py-4 bg-[#f59e0b] hover:bg-[#f59e0b]/80 text-black font-bold uppercase tracking-widest rounded-r-full rounded-l-lg transition-all disabled:opacity-50 flex items-center justify-center gap-3 cursor-pointer"
             >
