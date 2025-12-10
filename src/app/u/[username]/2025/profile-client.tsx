@@ -236,7 +236,7 @@ export function PublicProfileClient({
               <LcarsDataRow label="COMMITS" value={summary.totalCommits} color="#f59e0b" />
               <LcarsDataRow label="PULL REQUESTS" value={summary.totalPRs} color="#22d3ee" />
               <LcarsDataRow label="ISSUES CLOSED" value={summary.totalIssues} color="#9370db" />
-              <LcarsDataRow label="STARS EARNED" value={summary.totalStarsEarned} color="#cc6666" />
+              <LcarsDataRow label="TOTAL STARS" value={summary.totalStarsEarned} color="#cc6666" />
               <LcarsDataRow label="DAY STREAK" value={summary.longestStreak} color="#f59e0b" />
             </div>
           </div>

@@ -96,7 +96,7 @@ Built with React Three Fiber, each component represents a different aspect of yo
 | `CONSISTENT` | Contributions every month |
 | `THOUSAND_CLUB` | 1000+ contributions in the year |
 | `PR_MACHINE` | 50+ pull requests |
-| `STAR_COLLECTOR` | Repos gained 100+ total stars |
+| `STAR_COLLECTOR` | Own repos with 100+ total stars |
 | `BUG_HUNTER` | 30+ issues opened |
 | `OPEN_SOURCERER` | Contributed to 5+ public repos |
 | `FIRST_CONTACT` | Made first contribution of the year |

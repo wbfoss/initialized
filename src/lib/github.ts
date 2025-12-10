@@ -865,7 +865,7 @@ export const ACHIEVEMENTS: AchievementCheck[] = [
   {
     code: 'STAR_COLLECTOR',
     name: 'Star Collector',
-    description: 'Repositories gained 100+ total stars',
+    description: 'Own repositories with 100+ total stars',
     icon: 'stars',
     check: (stats) => stats.totalStarsEarned >= 100,
   },

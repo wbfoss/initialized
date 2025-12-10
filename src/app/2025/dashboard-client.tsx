@@ -104,6 +104,16 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
   const shipRegistry = `NCC-${user.username.length * 1000 + 2025}`;
   const clearance = useMemo(() => calculateClearanceLevel(user.githubCreatedAt), [user.githubCreatedAt]);
 
+  // Check if we're viewing a past year's stats (show "see you next year" banner)
+  const YEARBOOK_YEAR = 2025;
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-indexed (0 = January, 11 = December)
+  const isYearComplete = currentYear > YEARBOOK_YEAR;
+  const isNextYearbookAvailable = currentYear > YEARBOOK_YEAR && currentMonth >= 11; // December or later
+  const showNextYearBanner = isYearComplete && !isNextYearbookAvailable;
+  const nextYearbookDate = `December 1st, ${currentYear}`;
+
   useEffect(() => {
     setMounted(true);
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -180,6 +190,9 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
         onRefresh={handleRefresh}
         onCopyShareLink={copyShareLink}
         onLogout={handleLogout}
+        showNextYearBanner={showNextYearBanner}
+        yearbookYear={YEARBOOK_YEAR}
+        nextYearbookDate={nextYearbookDate}
       />
     );
   }
@@ -212,6 +225,15 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
           background: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,235,184,0.1) 2px, rgba(255,235,184,0.1) 4px)`
         }}
       />
+
+      {/* Next Year Banner */}
+      {showNextYearBanner && (
+        <div className="fixed top-0 left-0 right-0 z-[100] bg-gradient-to-r from-[#9370db] via-[#22d3ee] to-[#9370db] py-2 px-4 text-center">
+          <span className="text-black text-xs font-bold tracking-widest">
+            TRANSMISSION FROM STARFLEET: {YEARBOOK_YEAR} YEARBOOK COMPLETE • {currentYear} YEARBOOK AVAILABLE ON {nextYearbookDate.toUpperCase()}
+          </span>
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════
           TOP LCARS FRAME
@@ -306,7 +328,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
               <LcarsDataRow label="COMMITS" value={summary?.totalCommits || 0} color="#f59e0b" />
               <LcarsDataRow label="PULL REQUESTS" value={summary?.totalPRs || 0} color="#22d3ee" />
               <LcarsDataRow label="ISSUES CLOSED" value={summary?.totalIssues || 0} color="#9370db" />
-              <LcarsDataRow label="STARS EARNED" value={summary?.totalStarsEarned || 0} color="#cc6666" />
+              <LcarsDataRow label="TOTAL STARS" value={summary?.totalStarsEarned || 0} color="#cc6666" />
               <LcarsDataRow label="DAY STREAK" value={summary?.longestStreak || 0} color="#f59e0b" />
             </div>
           </div>
@@ -1207,6 +1229,9 @@ function MobileDashboard({
   onRefresh,
   onCopyShareLink,
   onLogout,
+  showNextYearBanner,
+  yearbookYear,
+  nextYearbookDate,
 }: {
   user: { id: string; username: string; name: string | null; avatarUrl: string | null };
   summary: SummaryStats | undefined;
@@ -1220,6 +1245,9 @@ function MobileDashboard({
   onRefresh: () => void;
   onCopyShareLink: () => void;
   onLogout: () => void;
+  showNextYearBanner: boolean;
+  yearbookYear: number;
+  nextYearbookDate: string;
 }) {
   return (
     <div className="min-h-screen bg-black font-mono">
@@ -1231,8 +1259,17 @@ function MobileDashboard({
         }}
       />
 
+      {/* Next Year Banner */}
+      {showNextYearBanner && (
+        <div className="sticky top-0 z-50 bg-gradient-to-r from-[#9370db] via-[#22d3ee] to-[#9370db] py-2 px-2 text-center">
+          <span className="text-black text-[9px] font-bold tracking-wider">
+            {yearbookYear} COMPLETE • SEE YOU {nextYearbookDate.toUpperCase()}
+          </span>
+        </div>
+      )}
+
       {/* Fixed Header */}
-      <header className="sticky top-0 z-40 bg-black">
+      <header className={`sticky ${showNextYearBanner ? 'top-8' : 'top-0'} z-40 bg-black`}>
         <div className="flex h-14">
           <div className="w-20 bg-[#f59e0b] rounded-br-[30px] flex items-center justify-center">
             <span className="text-black text-[10px] font-bold tracking-widest">LCARS</span>
@@ -1299,7 +1336,7 @@ function MobileDashboard({
           <MobileStatCard icon={<GitPullRequest className="h-4 w-4" />} label="Pull Requests" value={summary?.totalPRs || 0} color="#22d3ee" />
           <MobileStatCard icon={<AlertCircle className="h-4 w-4" />} label="Issues" value={summary?.totalIssues || 0} color="#9370db" />
           <MobileStatCard icon={<Flame className="h-4 w-4" />} label="Day Streak" value={summary?.longestStreak || 0} color="#cc6666" />
-          <MobileStatCard icon={<Star className="h-4 w-4" />} label="Stars Earned" value={summary?.totalStarsEarned || 0} color="#f59e0b" />
+          <MobileStatCard icon={<Star className="h-4 w-4" />} label="Total Stars" value={summary?.totalStarsEarned || 0} color="#f59e0b" />
           <MobileStatCard icon={<Trophy className="h-4 w-4" />} label="Achievements" value={achievements.length} color="#9370db" />
         </div>
 
