@@ -972,6 +972,8 @@ function QuickStat({ icon, label, value, color }: { icon: React.ReactNode; label
 // ═══════════════════════════════════════════════════════════════════════════
 
 function MobileHomePage({ stardate }: { stardate: string }) {
+  const [showDesktopTip, setShowDesktopTip] = useState(true);
+
   return (
     <div className="fixed inset-0 overflow-auto bg-black font-mono">
       {/* Scan lines */}
@@ -987,8 +989,23 @@ function MobileHomePage({ stardate }: { stardate: string }) {
         <div className="stars" />
       </div>
 
+      {/* Desktop recommendation banner */}
+      {showDesktopTip && (
+        <div className="sticky top-0 z-40 bg-gradient-to-r from-amber-500 via-cyan-500 to-amber-500 py-2 px-3 flex items-center justify-between">
+          <span className="text-black text-[9px] font-bold tracking-wide flex-1 text-center">
+            BEST VIEWED ON DESKTOP FOR FULL 3D EXPERIENCE
+          </span>
+          <button
+            onClick={() => setShowDesktopTip(false)}
+            className="text-black/70 hover:text-black text-xs font-bold px-2"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Top LCARS bar */}
-      <div className="sticky top-0 z-30 flex h-14">
+      <div className={`sticky ${showDesktopTip ? 'top-8' : 'top-0'} z-30 flex h-14`}>
         <div className="w-20 bg-amber-500 rounded-br-[30px] flex items-center justify-end pr-3">
           <span className="text-black text-[10px] font-bold">LCARS</span>
         </div>
