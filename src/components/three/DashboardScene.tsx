@@ -173,11 +173,32 @@ function CentralStar({ contributions }: { contributions: number }) {
 
   return (
     <group>
-      {/* Label */}
+      {/* Contribution number inside star */}
+      <Html position={[0, 0, 0]} center distanceFactor={8} sprite>
+        <div className="pointer-events-none select-none text-center">
+          <div
+            className="text-4xl font-bold tabular-nums"
+            style={{
+              color: '#1a1a2e',
+              textShadow: '0 0 10px rgba(0,0,0,0.5)',
+              fontFamily: 'system-ui, sans-serif'
+            }}
+          >
+            {contributions.toLocaleString()}
+          </div>
+          <div
+            className="text-[8px] uppercase tracking-[0.2em] font-bold"
+            style={{ color: '#1a1a2e', opacity: 0.8 }}
+          >
+            Contributions
+          </div>
+        </div>
+      </Html>
+
+      {/* Label above star */}
       <GalacticLabel
-        position={[0, scale * 3 + 1, 0]}
+        position={[0, scale * 3 + 1.5, 0]}
         label="Core Star"
-        sublabel={`${contributions.toLocaleString()} contributions`}
         color="#f59e0b"
       />
 

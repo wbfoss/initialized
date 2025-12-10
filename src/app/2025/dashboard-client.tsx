@@ -512,25 +512,6 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
           CENTER MAIN DISPLAY - Minimal overlay to show more galaxy
           ═══════════════════════════════════════════════════════════════════ */}
       <div className="absolute left-52 right-52 top-[88px] bottom-[72px] z-10 flex flex-col pointer-events-none">
-        {/* Top: Big Number Only */}
-        <div className="flex flex-col items-center pt-2 pointer-events-auto">
-          {/* Big Number Display - Smaller */}
-          <div className="text-center">
-            <div
-              className="text-[56px] font-bold leading-none tabular-nums tracking-tight"
-              style={{
-                color: '#f59e0b',
-                textShadow: '0 0 30px rgba(245, 158, 11, 0.4), 0 0 60px rgba(245, 158, 11, 0.2)'
-              }}
-            >
-              {(summary?.totalContributions || 0).toLocaleString()}
-            </div>
-            <div className="text-[#9370db] uppercase tracking-[0.4em] text-[10px] mt-1">
-              Contributions
-            </div>
-          </div>
-        </div>
-
         {/* Spacer - lets the galaxy show through */}
         <div className="flex-1" />
 
