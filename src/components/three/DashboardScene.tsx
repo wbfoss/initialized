@@ -110,6 +110,40 @@ function NebulaCloud({ position, color, scale = 1 }: { position: [number, number
   );
 }
 
+// Floating label component
+function GalacticLabel({
+  position,
+  label,
+  sublabel,
+  color = '#22d3ee'
+}: {
+  position: [number, number, number];
+  label: string;
+  sublabel?: string;
+  color?: string;
+}) {
+  return (
+    <Html position={position} center distanceFactor={15} sprite>
+      <div className="pointer-events-none select-none whitespace-nowrap">
+        <div
+          className="text-[10px] font-bold tracking-widest uppercase"
+          style={{
+            color,
+            textShadow: `0 0 10px ${color}, 0 0 20px ${color}50`
+          }}
+        >
+          {label}
+        </div>
+        {sublabel && (
+          <div className="text-[8px] text-white/50 tracking-wider text-center">
+            {sublabel}
+          </div>
+        )}
+      </div>
+    </Html>
+  );
+}
+
 // Epic central star with corona and flares
 function CentralStar({ contributions }: { contributions: number }) {
   const coreRef = useRef<THREE.Mesh>(null);
@@ -139,6 +173,14 @@ function CentralStar({ contributions }: { contributions: number }) {
 
   return (
     <group>
+      {/* Label */}
+      <GalacticLabel
+        position={[0, scale * 3 + 1, 0]}
+        label="Core Star"
+        sublabel={`${contributions.toLocaleString()} contributions`}
+        color="#f59e0b"
+      />
+
       {/* Outer corona glow */}
       <mesh ref={coronaRef} scale={scale * 2}>
         <sphereGeometry args={[1, 32, 32]} />
@@ -247,6 +289,7 @@ function GlowingOrbit({ radius, color, speed = 1 }: { radius: number; color: str
 function ActivityNodes({ monthlyData, radius }: { monthlyData: Array<{ month: number; count: number }>; radius: number }) {
   const groupRef = useRef<THREE.Group>(null);
   const maxCount = Math.max(...monthlyData.map((d) => d.count), 1);
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   useFrame((state) => {
     if (groupRef.current) {
@@ -256,6 +299,14 @@ function ActivityNodes({ monthlyData, radius }: { monthlyData: Array<{ month: nu
 
   return (
     <group ref={groupRef}>
+      {/* Orbit label */}
+      <GalacticLabel
+        position={[radius + 2, 2, 0]}
+        label="Activity Orbit"
+        sublabel="Monthly patterns"
+        color="#22d3ee"
+      />
+
       {monthlyData.map((data, index) => {
         const angle = (index / 12) * Math.PI * 2 - Math.PI / 2;
         const x = Math.cos(angle) * radius;
@@ -266,6 +317,17 @@ function ActivityNodes({ monthlyData, radius }: { monthlyData: Array<{ month: nu
         return (
           <Float key={data.month} speed={2} floatIntensity={0.5}>
             <group position={[x, 0, z]}>
+              {/* Month label for high activity months */}
+              {intensity > 0.6 && (
+                <Html position={[0, nodeScale + 0.8, 0]} center distanceFactor={12} sprite>
+                  <div className="pointer-events-none select-none text-center">
+                    <div className="text-[8px] font-bold text-[#22d3ee]" style={{ textShadow: '0 0 8px #22d3ee' }}>
+                      {monthNames[index]}
+                    </div>
+                    <div className="text-[7px] text-white/40">{data.count}</div>
+                  </div>
+                </Html>
+              )}
               {/* Glow */}
               <mesh scale={nodeScale * 2}>
                 <sphereGeometry args={[1, 16, 16]} />
@@ -295,15 +357,36 @@ function ActivityNodes({ monthlyData, radius }: { monthlyData: Array<{ month: nu
 function RepoCrystals({ repos }: { repos: DashboardSceneProps['repos'] }) {
   return (
     <group>
+      {/* Section label */}
+      <GalacticLabel
+        position={[14, 4, 0]}
+        label="Repo Crystals"
+        sublabel={`${repos.length} repositories`}
+        color="#a78bfa"
+      />
+
       {repos.slice(0, 8).map((repo, i) => {
         const angle = (i / 8) * Math.PI * 2;
         const distance = 12 + (i % 3) * 2;
         const height = (seededRandom(i * 50) - 0.5) * 4;
         const scale = 0.3 + (repo.commitsByUser2025 / 100) * 0.3;
+        const repoName = repo.fullName.split('/')[1] || repo.fullName;
 
         return (
           <Float key={repo.fullName} speed={1 + seededRandom(i) * 2} floatIntensity={0.3}>
             <group position={[Math.cos(angle) * distance, height, Math.sin(angle) * distance]}>
+              {/* Repo name label */}
+              <Html position={[0, scale + 0.6, 0]} center distanceFactor={12} sprite>
+                <div className="pointer-events-none select-none text-center">
+                  <div
+                    className="text-[7px] font-bold text-[#a78bfa] truncate max-w-[60px]"
+                    style={{ textShadow: '0 0 6px #a78bfa' }}
+                  >
+                    {repoName.length > 10 ? repoName.slice(0, 10) + '…' : repoName}
+                  </div>
+                  <div className="text-[6px] text-white/30">{repo.commitsByUser2025} commits</div>
+                </div>
+              </Html>
               {/* Crystal glow */}
               <mesh scale={scale * 1.5}>
                 <octahedronGeometry args={[1]} />
@@ -405,6 +488,14 @@ function LanguageNebulas({ languages }: { languages?: DashboardSceneProps['langu
 
   return (
     <group ref={groupRef}>
+      {/* Section label */}
+      <GalacticLabel
+        position={[-18, 6, 0]}
+        label="Language Nebulas"
+        sublabel={`${languages.length} languages`}
+        color="#ec4899"
+      />
+
       {languages.slice(0, 6).map((lang, i) => {
         const angle = (i / 6) * Math.PI * 2;
         const distance = 18 + (i % 2) * 5;
@@ -414,6 +505,18 @@ function LanguageNebulas({ languages }: { languages?: DashboardSceneProps['langu
 
         return (
           <group key={lang.language} position={[Math.cos(angle) * distance, height, Math.sin(angle) * distance]}>
+            {/* Language name label */}
+            <Html position={[0, scale * 2 + 1, 0]} center distanceFactor={15} sprite>
+              <div className="pointer-events-none select-none text-center">
+                <div
+                  className="text-[8px] font-bold"
+                  style={{ color, textShadow: `0 0 8px ${color}` }}
+                >
+                  {lang.language}
+                </div>
+                <div className="text-[6px] text-white/40">{lang.contributionShare.toFixed(0)}%</div>
+              </div>
+            </Html>
             {/* Outer glow */}
             <mesh scale={scale * 3}>
               <sphereGeometry args={[1, 16, 16]} />
@@ -479,6 +582,14 @@ function AchievementConstellation({ achievements }: { achievements?: DashboardSc
 
   return (
     <group ref={groupRef} position={[0, 8, 0]}>
+      {/* Section label */}
+      <GalacticLabel
+        position={[0, 6, 0]}
+        label="Achievement Stars"
+        sublabel={`${achievements.length} earned`}
+        color="#fbbf24"
+      />
+
       {achievements.slice(0, 12).map((achievement, i) => {
         const angle = (i / Math.min(achievements.length, 12)) * Math.PI * 2;
         const radius = 14 + (i % 3) * 2;
@@ -490,6 +601,17 @@ function AchievementConstellation({ achievements }: { achievements?: DashboardSc
         return (
           <Float key={achievement.code} speed={2} floatIntensity={0.5}>
             <group position={[x, y, z]}>
+              {/* Achievement name label */}
+              <Html position={[0, 1.2, 0]} center distanceFactor={12} sprite>
+                <div className="pointer-events-none select-none text-center">
+                  <div
+                    className="text-[7px] font-bold"
+                    style={{ color, textShadow: `0 0 6px ${color}` }}
+                  >
+                    {achievement.name}
+                  </div>
+                </div>
+              </Html>
               {/* Star glow */}
               <mesh scale={0.8}>
                 <octahedronGeometry args={[1]} />
