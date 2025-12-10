@@ -606,6 +606,9 @@ export async function fetchCollaboratorsForYear(
 
   // Process PR contributors
   for (const pr of collection.pullRequestContributions?.nodes ?? []) {
+    // Skip if pullRequest is null (deleted PRs)
+    if (!pr.pullRequest) continue;
+
     if (pr.pullRequest.author && pr.pullRequest.author.login !== username) {
       const login = pr.pullRequest.author.login;
       const existing = collaboratorMap.get(login);
@@ -641,6 +644,9 @@ export async function fetchCollaboratorsForYear(
 
   // Process issue participants
   for (const issue of collection.issueContributions?.nodes ?? []) {
+    // Skip if issue is null (deleted issues)
+    if (!issue.issue) continue;
+
     for (const participant of issue.issue.participants?.nodes ?? []) {
       if (participant.login !== username) {
         const login = participant.login;
