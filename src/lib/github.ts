@@ -579,8 +579,8 @@ export async function fetchCollaboratorsForYear(
                 nodes: Array<{
                   author: { login: string; avatarUrl: string } | null;
                 }>;
-              };
-            };
+              } | null;
+            } | null;  // PR can be null if deleted
           }>;
         };
         issueContributions: {
@@ -588,8 +588,8 @@ export async function fetchCollaboratorsForYear(
             issue: {
               participants: {
                 nodes: Array<{ login: string; avatarUrl: string }>;
-              };
-            };
+              } | null;
+            } | null;  // Issue can be null if deleted
           }>;
         };
       };
@@ -624,7 +624,7 @@ export async function fetchCollaboratorsForYear(
       }
     }
 
-    for (const review of pr.pullRequest.reviews?.nodes ?? []) {
+    for (const review of pr.pullRequest?.reviews?.nodes ?? []) {
       if (review.author && review.author.login !== username) {
         const login = review.author.login;
         const existing = collaboratorMap.get(login);
@@ -647,7 +647,7 @@ export async function fetchCollaboratorsForYear(
     // Skip if issue is null (deleted issues)
     if (!issue.issue) continue;
 
-    for (const participant of issue.issue.participants?.nodes ?? []) {
+    for (const participant of issue.issue?.participants?.nodes ?? []) {
       if (participant.login !== username) {
         const login = participant.login;
         const existing = collaboratorMap.get(login);
