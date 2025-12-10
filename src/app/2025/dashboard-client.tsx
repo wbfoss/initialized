@@ -145,14 +145,23 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await fetch('/api/stats/refresh', {
+      const response = await fetch('/api/stats/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ year: 2025 }),
       });
+
+      if (!response.ok) {
+        const data = await response.json();
+        console.error('Refresh failed:', data);
+        alert(`Failed to fetch stats: ${data.error || 'Unknown error'}`);
+        return;
+      }
+
       window.location.reload();
     } catch (error) {
       console.error('Failed to refresh:', error);
+      alert('Failed to connect to server. Please try again.');
     } finally {
       setIsRefreshing(false);
     }
