@@ -21,6 +21,7 @@ interface IDCardClientProps {
     longestStreak: number;
     achievementCount: number;
     topLanguages: string[];
+    followers: number;
   };
   viewer: {
     isLoggedIn: boolean;
@@ -51,7 +52,11 @@ export function IDCardClient({ user, stats, viewer, achievements }: IDCardClient
   const [copied, setCopied] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const clearance = calculateClearanceLevel(user.githubCreatedAt);
+  const clearance = calculateClearanceLevel({
+    githubCreatedAt: user.githubCreatedAt,
+    followers: stats.followers,
+    totalContributions: stats.totalContributions,
+  });
   const division = getDivision(stats.topLanguages);
   const serialNumber = `SFC-${user.githubId.slice(-6).toUpperCase().padStart(6, '0')}`;
   const issueDate = user.githubCreatedAt

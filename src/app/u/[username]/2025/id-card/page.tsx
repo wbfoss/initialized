@@ -114,6 +114,7 @@ export default async function IDCardPage({ params }: PageProps) {
     totalContributions?: number;
     totalCommits?: number;
     longestStreak?: number;
+    followers?: number;
   } | null;
 
   // Check if current viewer is logged in and if they're viewing their own card
@@ -135,6 +136,7 @@ export default async function IDCardPage({ params }: PageProps) {
         longestStreak: summary?.longestStreak || 0,
         achievementCount: achievements.length,
         topLanguages: yearStats?.languages.map(l => l.language) || [],
+        followers: summary?.followers || 0,
       }}
       achievements={achievements.map(a => ({
         code: a.achievement.code,

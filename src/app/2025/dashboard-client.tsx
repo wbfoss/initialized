@@ -110,7 +110,11 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
 
   const stardate = `${new Date().getFullYear()}.${Math.floor((Date.now() % 31536000000) / 86400000).toString().padStart(3, '0')}`;
   const shipRegistry = `NCC-${user.username.length * 1000 + 2025}`;
-  const clearance = useMemo(() => calculateClearanceLevel(user.githubCreatedAt), [user.githubCreatedAt]);
+  const clearance = useMemo(() => calculateClearanceLevel({
+    githubCreatedAt: user.githubCreatedAt,
+    followers: (summary as { followers?: number } | undefined)?.followers || 0,
+    totalContributions: summary?.totalContributions || 0,
+  }), [user.githubCreatedAt, summary]);
 
   // Check if we're viewing a past year's stats (show "see you next year" banner)
   const YEARBOOK_YEAR = 2025;

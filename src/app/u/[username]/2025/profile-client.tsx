@@ -95,7 +95,11 @@ export function PublicProfileClient({
 
   const stardate = `${new Date().getFullYear()}.${Math.floor((Date.now() % 31536000000) / 86400000).toString().padStart(3, '0')}`;
   const shipRegistry = `NCC-${user.username.length * 1000 + 2025}`;
-  const clearance = calculateClearanceLevel(user.githubCreatedAt);
+  const clearance = calculateClearanceLevel({
+    githubCreatedAt: user.githubCreatedAt,
+    followers: (summary as { followers?: number })?.followers || 0,
+    totalContributions: summary.totalContributions || 0,
+  });
 
   useEffect(() => {
     setMounted(true);

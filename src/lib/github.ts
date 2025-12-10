@@ -76,6 +76,7 @@ export interface AggregatedStats {
   mostActiveDay: string;
   mostActiveHour: number;
   maxWeeklyContributions: number; // Maximum contributions in any single week
+  followers: number; // GitHub followers count for rank calculation
 }
 
 // Helper for REST API calls
@@ -672,7 +673,7 @@ export function computeAggregatedYearStats(raw: {
   collaborators: CollaboratorData[];
   totalOwnedStars: number; // Total stars from ALL owned repos (personal + org)
 }): AggregatedStats & { commitTimestamps: string[] } {
-  const { contributions, repos, collaborators, totalOwnedStars } = raw;
+  const { profile, contributions, repos, collaborators, totalOwnedStars } = raw;
 
   // Calculate contributions by month
   const contributionsByMonth: { month: number; count: number }[] = Array.from(
@@ -786,6 +787,7 @@ export function computeAggregatedYearStats(raw: {
     mostActiveDay,
     mostActiveHour,
     maxWeeklyContributions,
+    followers: profile.followers, // For rank calculation
     commitTimestamps: contributions.commitTimestamps,
   };
 }
@@ -945,27 +947,65 @@ export function calculateAchievements(stats: AggregatedStats & { commitTimestamp
   return ACHIEVEMENTS.filter((a) => a.check(stats)).map((a) => a.code);
 }
 
-// Security clearance level based on GitHub account age
+// Security clearance level based on GitHub profile metrics
 export interface ClearanceLevel {
   level: number;
   title: string;
 }
 
-export function calculateClearanceLevel(githubCreatedAt: string | Date | null): ClearanceLevel {
-  if (!githubCreatedAt) return { level: 1, title: 'ENSIGN' };
+export interface ClearanceInput {
+  githubCreatedAt: string | Date | null;
+  followers?: number;
+  totalContributions?: number;
+}
 
-  const createdDate = typeof githubCreatedAt === 'string' ? new Date(githubCreatedAt) : githubCreatedAt;
-  const now = new Date();
-  const yearsOnGitHub = Math.floor((now.getTime() - createdDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+export function calculateClearanceLevel(input: ClearanceInput | string | Date | null): ClearanceLevel {
+  // Support legacy call with just date
+  if (input === null || typeof input === 'string' || input instanceof Date) {
+    return calculateClearanceLevelFromScore({
+      githubCreatedAt: input,
+      followers: 0,
+      totalContributions: 0,
+    });
+  }
+  return calculateClearanceLevelFromScore(input);
+}
 
-  if (yearsOnGitHub >= 15) return { level: 10, title: 'FLEET ADMIRAL' };
-  if (yearsOnGitHub >= 12) return { level: 9, title: 'ADMIRAL' };
-  if (yearsOnGitHub >= 10) return { level: 8, title: 'VICE ADMIRAL' };
-  if (yearsOnGitHub >= 8) return { level: 7, title: 'COMMODORE' };
-  if (yearsOnGitHub >= 6) return { level: 6, title: 'CAPTAIN' };
-  if (yearsOnGitHub >= 4) return { level: 5, title: 'COMMANDER' };
-  if (yearsOnGitHub >= 3) return { level: 4, title: 'LT COMMANDER' };
-  if (yearsOnGitHub >= 2) return { level: 3, title: 'LIEUTENANT' };
-  if (yearsOnGitHub >= 1) return { level: 2, title: 'LT JUNIOR GRADE' };
+function calculateClearanceLevelFromScore(input: ClearanceInput): ClearanceLevel {
+  const { githubCreatedAt, followers = 0, totalContributions = 0 } = input;
+
+  // Calculate years on GitHub
+  let yearsOnGitHub = 0;
+  if (githubCreatedAt) {
+    const createdDate = typeof githubCreatedAt === 'string' ? new Date(githubCreatedAt) : githubCreatedAt;
+    const now = new Date();
+    yearsOnGitHub = (now.getTime() - createdDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+  }
+
+  // Scoring system (max 100 points):
+  // - Account age: 0-40 points (4 points per year, max at 10 years)
+  // - Followers: 0-30 points (logarithmic scale)
+  // - Contributions: 0-30 points (logarithmic scale)
+
+  const ageScore = Math.min(yearsOnGitHub * 4, 40);
+
+  // Followers: log scale - 10 followers = 10pts, 100 = 20pts, 1000 = 30pts
+  const followerScore = followers > 0 ? Math.min(Math.log10(followers) * 10, 30) : 0;
+
+  // Contributions: log scale - 100 = 10pts, 1000 = 20pts, 10000 = 30pts
+  const contributionScore = totalContributions > 0 ? Math.min(Math.log10(totalContributions) * 10, 30) : 0;
+
+  const totalScore = ageScore + followerScore + contributionScore;
+
+  // Map score to rank (0-100 scale)
+  if (totalScore >= 85) return { level: 10, title: 'FLEET ADMIRAL' };
+  if (totalScore >= 75) return { level: 9, title: 'ADMIRAL' };
+  if (totalScore >= 65) return { level: 8, title: 'VICE ADMIRAL' };
+  if (totalScore >= 55) return { level: 7, title: 'COMMODORE' };
+  if (totalScore >= 45) return { level: 6, title: 'CAPTAIN' };
+  if (totalScore >= 35) return { level: 5, title: 'COMMANDER' };
+  if (totalScore >= 25) return { level: 4, title: 'LT COMMANDER' };
+  if (totalScore >= 15) return { level: 3, title: 'LIEUTENANT' };
+  if (totalScore >= 8) return { level: 2, title: 'LT JUNIOR GRADE' };
   return { level: 1, title: 'ENSIGN' };
 }
