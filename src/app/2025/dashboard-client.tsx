@@ -25,6 +25,11 @@ import {
   Shield,
   Globe,
   IdCard,
+  X,
+  Download,
+  Twitter,
+  Linkedin,
+  Copy,
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -96,6 +101,8 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
   const [mounted, setMounted] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showBadge, setShowBadge] = useState(false);
+  const [badgeCopied, setBadgeCopied] = useState(false);
 
   const summary = yearStats?.summaryJson as SummaryStats | undefined;
   const needsRefresh = !yearStats;
@@ -307,15 +314,22 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
               <span className="text-black text-[11px] font-bold tracking-widest">OFFICER PROFILE</span>
             </div>
             <div className="p-4 flex flex-col items-center">
-              <Avatar className="h-20 w-20 border-4 border-[#f59e0b] mb-3">
+              <Avatar className="h-16 w-16 border-4 border-[#f59e0b] mb-2">
                 <AvatarImage src={user.avatarUrl || undefined} />
-                <AvatarFallback className="bg-[#f59e0b]/20 text-[#f59e0b] text-2xl font-bold">
+                <AvatarFallback className="bg-[#f59e0b]/20 text-[#f59e0b] text-xl font-bold">
                   {user.username?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="text-[#f59e0b] text-sm font-bold text-center">{user.name || user.username}</div>
               <div className="text-[#9370db] text-[10px] tracking-widest">@{user.username}</div>
               <div className="text-[#cc6666] text-[9px] mt-1 tracking-widest">CLEARANCE LEVEL {clearance.level}</div>
+              <button
+                onClick={() => setShowBadge(true)}
+                className="mt-3 flex items-center gap-1.5 px-3 py-1.5 bg-[#22d3ee] text-black text-[9px] font-bold uppercase tracking-widest rounded-full hover:bg-[#22d3ee]/80 transition-colors"
+              >
+                <IdCard className="h-3 w-3" />
+                Get Badge
+              </button>
             </div>
           </div>
 
@@ -693,6 +707,164 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
           </div>
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          STARFLEET ID BADGE OVERLAY
+          ═══════════════════════════════════════════════════════════════════ */}
+      {showBadge && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShowBadge(false)}
+        >
+          <div
+            className="relative max-w-lg w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setShowBadge(false)}
+              className="absolute -top-10 right-0 text-white/60 hover:text-white transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+
+            {/* ID Badge Card */}
+            <div className="bg-[#1a1a2e] rounded-xl border-4 border-[#f59e0b] overflow-hidden shadow-2xl">
+              {/* Header */}
+              <div className="bg-[#f59e0b] px-4 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-8 bg-[#cc6666] rounded-full" />
+                  <div className="w-3 h-8 bg-[#9370db] rounded-full" />
+                </div>
+                <span className="text-black text-lg font-bold tracking-[0.3em]">STARFLEET ID CARD</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-8 bg-[#9370db] rounded-full" />
+                  <div className="w-3 h-8 bg-[#22d3ee] rounded-full" />
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 flex gap-6">
+                {/* Left side - colored bars */}
+                <div className="flex flex-col gap-1 w-16">
+                  <div className="bg-[#f59e0b] rounded px-2 py-1 text-[7px] text-black font-bold">AL CON</div>
+                  <div className="bg-[#f59e0b] rounded px-2 py-1 text-[7px] text-black font-bold">MI WES</div>
+                  <div className="bg-[#f59e0b] rounded px-2 py-1 text-[7px] text-black font-bold">MA RID</div>
+                  <div className="h-2" />
+                  <div className="bg-[#cc6666] rounded px-2 py-1 text-[7px] text-black font-bold">SU DUC</div>
+                  <div className="bg-[#9370db] rounded px-2 py-1 text-[7px] text-black font-bold">JE IDA</div>
+                  <div className="bg-[#22d3ee] rounded px-2 py-1 text-[7px] text-black font-bold">TI MCC</div>
+                  <div className="bg-[#f59e0b] rounded px-2 py-1 text-[7px] text-black font-bold">NO LEO</div>
+                </div>
+
+                {/* Center - info */}
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <div className="text-[#f59e0b] text-[9px] tracking-widest">NAME:</div>
+                    <div className="text-white text-lg font-bold">{user.name || user.username}</div>
+                  </div>
+                  <div>
+                    <div className="text-[#f59e0b] text-[9px] tracking-widest">SERIAL NUMBER:</div>
+                    <div className="text-[#22d3ee] text-sm font-mono">@{user.username}</div>
+                  </div>
+                  <div className="flex gap-6">
+                    <div>
+                      <div className="text-[#f59e0b] text-[9px] tracking-widest">RANK:</div>
+                      <div className="text-[#9370db] text-sm font-bold">{clearance.title}</div>
+                    </div>
+                    <div>
+                      <div className="text-[#f59e0b] text-[9px] tracking-widest">CLEARANCE:</div>
+                      <div className="text-[#cc6666] text-sm font-bold">LEVEL {clearance.level}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[#f59e0b] text-[9px] tracking-widest">ASSIGNMENT:</div>
+                    <div className="text-white text-sm">GitHub Yearbook 2025</div>
+                  </div>
+                  <div>
+                    <div className="text-[#f59e0b] text-[9px] tracking-widest">CONTRIBUTIONS:</div>
+                    <div className="text-[#22d3ee] text-2xl font-bold tabular-nums">
+                      {(summary?.totalContributions || 0).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right side - photo & LCARS */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className="text-[#9370db] text-[8px] tracking-widest">LCARS</div>
+                  <Avatar className="h-24 w-24 border-4 border-[#9370db]">
+                    <AvatarImage src={user.avatarUrl || undefined} />
+                    <AvatarFallback className="bg-[#9370db]/20 text-[#9370db] text-3xl font-bold">
+                      {user.username?.[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="w-full h-6 bg-[#9370db]/30 rounded" />
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="bg-[#1a1a2e] border-t-2 border-[#f59e0b]/30 px-4 py-2 flex items-center justify-between">
+                <div className="flex gap-1">
+                  <div className="bg-[#cc6666] rounded px-3 py-1 text-[7px] text-black font-bold">BR MIL</div>
+                  <div className="bg-[#cc6666] rounded px-3 py-1 text-[7px] text-black font-bold">BR SCH</div>
+                  <div className="bg-[#9370db] rounded px-3 py-1 text-[7px] text-black font-bold">LA FRE</div>
+                  <div className="bg-[#22d3ee] rounded px-3 py-1 text-[7px] text-black font-bold">FB VAL</div>
+                </div>
+                <div className="text-[#f59e0b] text-[10px] font-bold tracking-widest">CREW DATABASE</div>
+              </div>
+            </div>
+
+            {/* Share options */}
+            <div className="mt-4 flex items-center justify-center gap-3">
+              <button
+                onClick={() => {
+                  const badgeUrl = `${window.location.origin}/u/${user.username}/2025/id-card`;
+                  navigator.clipboard.writeText(badgeUrl);
+                  setBadgeCopied(true);
+                  setTimeout(() => setBadgeCopied(false), 2000);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-[#22d3ee] text-black text-[10px] font-bold uppercase tracking-wider rounded-full hover:bg-[#22d3ee]/80 transition-colors"
+              >
+                {badgeCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {badgeCopied ? 'Copied!' : 'Copy Link'}
+              </button>
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out my GitHub Starfleet ID Card for 2025! 🚀\n\n${summary?.totalContributions || 0} contributions this year.\n\n`)}&url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : 'https://initialized.dev'}/u/${user.username}/2025/id-card`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-[#1DA1F2] text-white text-[10px] font-bold uppercase tracking-wider rounded-full hover:bg-[#1DA1F2]/80 transition-colors"
+              >
+                <Twitter className="h-3 w-3" />
+                Share
+              </a>
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : 'https://initialized.dev'}/u/${user.username}/2025/id-card`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-[#0A66C2] text-white text-[10px] font-bold uppercase tracking-wider rounded-full hover:bg-[#0A66C2]/80 transition-colors"
+              >
+                <Linkedin className="h-3 w-3" />
+                Share
+              </a>
+              <Link
+                href={`/u/${user.username}/2025/id-card`}
+                className="flex items-center gap-2 px-4 py-2 bg-[#f59e0b] text-black text-[10px] font-bold uppercase tracking-wider rounded-full hover:bg-[#f59e0b]/80 transition-colors"
+              >
+                <Globe className="h-3 w-3" />
+                View Page
+              </Link>
+            </div>
+
+            {/* Shareable URL */}
+            <div className="mt-3 text-center">
+              <div className="text-[#9370db] text-[9px] tracking-widest mb-1">SHAREABLE URL</div>
+              <div className="bg-black/50 rounded px-4 py-2 text-[#22d3ee] text-xs font-mono">
+                initialized.dev/u/{user.username}/2025/id-card
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
