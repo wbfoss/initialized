@@ -82,22 +82,26 @@ Built with React Three Fiber, each component represents a different aspect of yo
 
 ## Achievement System
 
-Achievements are calculated based on contribution patterns:
+16 achievements are calculated based on contribution patterns:
 
 | Badge | Trigger |
 |-------|---------|
+| `NIGHT_OWL` | Commits between midnight-4am |
+| `EARLY_BIRD` | Commits between 5-7am |
 | `STREAK_MASTER` | 30+ day contribution streak |
 | `CENTURY` | 100+ contributions in a month |
 | `POLYGLOT` | Used 5+ programming languages |
 | `GALAXY_WANDERER` | Contributed to 10+ repos |
-| `NIGHT_OWL` | Commits between midnight-4am |
-| `EARLY_BIRD` | Commits between 5-7am |
+| `TEAM_PLAYER` | Collaborated with 10+ developers |
+| `CONSISTENT` | Contributions every month |
 | `THOUSAND_CLUB` | 1000+ contributions in the year |
 | `PR_MACHINE` | 50+ pull requests |
+| `STAR_COLLECTOR` | Repos gained 100+ total stars |
 | `BUG_HUNTER` | 30+ issues opened |
-| `CONSISTENT` | Contributions every month |
-| `OPEN_SOURCERER` | Contributed to public repos |
-| `STAR_COLLECTOR` | Repos gained 100+ stars |
+| `OPEN_SOURCERER` | Contributed to 5+ public repos |
+| `FIRST_CONTACT` | Made first contribution of the year |
+| `WARP_SPEED` | High velocity contributor (200+ contributions) |
+| `WEEKEND_WARRIOR` | Made contributions on weekends |
 
 ---
 

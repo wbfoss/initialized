@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Share2, Check, Download, ArrowLeft } from 'lucide-react';
+import { calculateClearanceLevel } from '@/lib/github';
 
 interface IDCardClientProps {
   user: {
@@ -20,24 +21,6 @@ interface IDCardClientProps {
     achievementCount: number;
     topLanguages: string[];
   };
-}
-
-function calculateClearanceLevel(githubCreatedAt: string | null): { level: number; title: string } {
-  if (!githubCreatedAt) return { level: 1, title: 'ENSIGN' };
-  const createdDate = new Date(githubCreatedAt);
-  const now = new Date();
-  const yearsOnGitHub = Math.floor((now.getTime() - createdDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-
-  if (yearsOnGitHub >= 15) return { level: 10, title: 'FLEET ADMIRAL' };
-  if (yearsOnGitHub >= 12) return { level: 9, title: 'ADMIRAL' };
-  if (yearsOnGitHub >= 10) return { level: 8, title: 'VICE ADMIRAL' };
-  if (yearsOnGitHub >= 8) return { level: 7, title: 'COMMODORE' };
-  if (yearsOnGitHub >= 6) return { level: 6, title: 'CAPTAIN' };
-  if (yearsOnGitHub >= 4) return { level: 5, title: 'COMMANDER' };
-  if (yearsOnGitHub >= 3) return { level: 4, title: 'LT COMMANDER' };
-  if (yearsOnGitHub >= 2) return { level: 3, title: 'LIEUTENANT' };
-  if (yearsOnGitHub >= 1) return { level: 2, title: 'LT JUNIOR GRADE' };
-  return { level: 1, title: 'ENSIGN' };
 }
 
 function getDivision(languages: string[]): { name: string; color: string } {

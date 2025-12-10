@@ -760,8 +760,86 @@ export const ACHIEVEMENTS: AchievementCheck[] = [
     icon: 'git-pull-request',
     check: (stats) => stats.totalPRs >= 50,
   },
+  {
+    code: 'STAR_COLLECTOR',
+    name: 'Star Collector',
+    description: 'Repositories gained 100+ total stars',
+    icon: 'stars',
+    check: (stats) => stats.totalStarsEarned >= 100,
+  },
+  {
+    code: 'BUG_HUNTER',
+    name: 'Bug Hunter',
+    description: 'Opened 30+ issues',
+    icon: 'bug',
+    check: (stats) => stats.totalIssues >= 30,
+  },
+  {
+    code: 'OPEN_SOURCERER',
+    name: 'Open Sourcerer',
+    description: 'Contributed to 5+ public repositories',
+    icon: 'globe',
+    check: (stats) => stats.topRepos.filter((r) => !r.isPrivate).length >= 5,
+  },
+  {
+    code: 'FIRST_CONTACT',
+    name: 'First Contact',
+    description: 'Made your first contribution of the year',
+    icon: 'hand',
+    check: (stats) => stats.totalContributions >= 1,
+  },
+  {
+    code: 'WARP_SPEED',
+    name: 'Warp Speed',
+    description: 'Made 50+ contributions in a single week',
+    icon: 'zap',
+    check: (stats) => {
+      // Check if any 7-day window has 50+ contributions
+      const days = stats.contributionsByMonth.reduce((sum, m) => sum + m.count, 0);
+      // Simplified check: if average weekly is high enough
+      return days >= 50 * 4; // At least 200 contributions suggests high weekly activity
+    },
+  },
+  {
+    code: 'WEEKEND_WARRIOR',
+    name: 'Weekend Warrior',
+    description: 'Made contributions on weekends',
+    icon: 'calendar-check',
+    check: (stats) => {
+      const timestamps = stats.commitTimestamps || [];
+      return timestamps.some((ts) => {
+        const day = new Date(ts).getUTCDay();
+        return day === 0 || day === 6; // Sunday or Saturday
+      });
+    },
+  },
 ];
 
 export function calculateAchievements(stats: AggregatedStats & { commitTimestamps?: string[] }): string[] {
   return ACHIEVEMENTS.filter((a) => a.check(stats)).map((a) => a.code);
+}
+
+// Security clearance level based on GitHub account age
+export interface ClearanceLevel {
+  level: number;
+  title: string;
+}
+
+export function calculateClearanceLevel(githubCreatedAt: string | Date | null): ClearanceLevel {
+  if (!githubCreatedAt) return { level: 1, title: 'ENSIGN' };
+
+  const createdDate = typeof githubCreatedAt === 'string' ? new Date(githubCreatedAt) : githubCreatedAt;
+  const now = new Date();
+  const yearsOnGitHub = Math.floor((now.getTime() - createdDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+
+  if (yearsOnGitHub >= 15) return { level: 10, title: 'FLEET ADMIRAL' };
+  if (yearsOnGitHub >= 12) return { level: 9, title: 'ADMIRAL' };
+  if (yearsOnGitHub >= 10) return { level: 8, title: 'VICE ADMIRAL' };
+  if (yearsOnGitHub >= 8) return { level: 7, title: 'COMMODORE' };
+  if (yearsOnGitHub >= 6) return { level: 6, title: 'CAPTAIN' };
+  if (yearsOnGitHub >= 4) return { level: 5, title: 'COMMANDER' };
+  if (yearsOnGitHub >= 3) return { level: 4, title: 'LT COMMANDER' };
+  if (yearsOnGitHub >= 2) return { level: 3, title: 'LIEUTENANT' };
+  if (yearsOnGitHub >= 1) return { level: 2, title: 'LT JUNIOR GRADE' };
+  return { level: 1, title: 'ENSIGN' };
 }

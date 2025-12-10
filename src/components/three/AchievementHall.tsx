@@ -17,13 +17,24 @@ interface AchievementHallProps {
 
 // Badge/medal colors based on achievement type
 const ACHIEVEMENT_COLORS: Record<string, string> = {
-  COMMIT_STREAK: '#f59e0b', // Amber
-  CENTURION: '#eab308', // Yellow
-  POLYGLOT: '#8b5cf6', // Purple
+  // Original achievements
   NIGHT_OWL: '#3b82f6', // Blue
   EARLY_BIRD: '#f97316', // Orange
-  SOCIAL_BUTTERFLY: '#ec4899', // Pink
+  STREAK_MASTER: '#ef4444', // Red (fire)
+  CENTURY: '#eab308', // Yellow (gold trophy)
+  POLYGLOT: '#8b5cf6', // Purple
+  GALAXY_WANDERER: '#06b6d4', // Cyan (space)
+  TEAM_PLAYER: '#ec4899', // Pink
+  CONSISTENT: '#22c55e', // Green (calendar)
+  THOUSAND_CLUB: '#fbbf24', // Gold (star)
+  PR_MACHINE: '#14b8a6', // Teal (git)
+  // New achievements
   STAR_COLLECTOR: '#fbbf24', // Gold
+  BUG_HUNTER: '#ef4444', // Red (bug)
+  OPEN_SOURCERER: '#22d3ee', // Light cyan (globe)
+  FIRST_CONTACT: '#a78bfa', // Light purple (hand)
+  WARP_SPEED: '#facc15', // Yellow (zap)
+  WEEKEND_WARRIOR: '#f472b6', // Light pink
   default: '#a855f7', // Default purple
 };
 

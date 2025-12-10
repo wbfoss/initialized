@@ -62,6 +62,7 @@ export default async function Dashboard2025() {
         username: user.username,
         name: user.name,
         avatarUrl: user.avatarUrl,
+        githubCreatedAt: user.githubCreatedAt?.toISOString() || null,
       }}
       yearStats={yearStats}
       achievements={achievements.map((ua) => ({

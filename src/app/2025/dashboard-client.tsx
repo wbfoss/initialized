@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { signOut } from 'next-auth/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { calculateClearanceLevel } from '@/lib/github';
 
 const DashboardScene = dynamic(
   () => import('@/components/three/DashboardScene').then((mod) => mod.DashboardScene),
@@ -40,6 +41,7 @@ interface DashboardProps {
     username: string;
     name: string | null;
     avatarUrl: string | null;
+    githubCreatedAt: string | null;
   };
   yearStats: {
     summaryJson: unknown;
@@ -100,6 +102,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
 
   const stardate = `${new Date().getFullYear()}.${Math.floor((Date.now() % 31536000000) / 86400000).toString().padStart(3, '0')}`;
   const shipRegistry = `NCC-${user.username.length * 1000 + 2025}`;
+  const clearance = useMemo(() => calculateClearanceLevel(user.githubCreatedAt), [user.githubCreatedAt]);
 
   useEffect(() => {
     setMounted(true);
@@ -171,6 +174,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
         achievements={achievements}
         stardate={stardate}
         shipRegistry={shipRegistry}
+        clearance={clearance}
         isRefreshing={isRefreshing}
         copied={copied}
         onRefresh={handleRefresh}
@@ -289,7 +293,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
               </Avatar>
               <div className="text-[#f59e0b] text-sm font-bold text-center">{user.name || user.username}</div>
               <div className="text-[#9370db] text-[10px] tracking-widest">@{user.username}</div>
-              <div className="text-[#cc6666] text-[9px] mt-1 tracking-widest">CLEARANCE LEVEL 7</div>
+              <div className="text-[#cc6666] text-[9px] mt-1 tracking-widest">CLEARANCE LEVEL {clearance.level}</div>
             </div>
           </div>
 
@@ -620,7 +624,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
               <div className="flex items-center gap-4">
                 <div className="text-right">
                   <div className="text-[10px] text-[#22d3ee]">{user.username}</div>
-                  <div className="text-[8px] text-[#f59e0b]/50">COMMAND LEVEL 7</div>
+                  <div className="text-[8px] text-[#f59e0b]/50">{clearance.title}</div>
                 </div>
                 <span className="text-[#22d3ee] flex items-center gap-1 text-[10px]">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
@@ -1197,6 +1201,7 @@ function MobileDashboard({
   achievements,
   stardate,
   shipRegistry,
+  clearance,
   isRefreshing,
   copied,
   onRefresh,
@@ -1209,6 +1214,7 @@ function MobileDashboard({
   achievements: DashboardProps['achievements'];
   stardate: string;
   shipRegistry: string;
+  clearance: { level: number; title: string };
   isRefreshing: boolean;
   copied: boolean;
   onRefresh: () => void;
@@ -1272,7 +1278,7 @@ function MobileDashboard({
             <div className="flex-1 min-w-0">
               <div className="text-[#f59e0b] font-bold truncate">{user.name || user.username}</div>
               <div className="text-[#9370db] text-xs">@{user.username}</div>
-              <div className="text-[#cc6666] text-[10px] tracking-widest mt-1">{shipRegistry}</div>
+              <div className="text-[#cc6666] text-[10px] tracking-widest mt-1">{clearance.title} • LEVEL {clearance.level}</div>
             </div>
           </div>
         </div>

@@ -19,7 +19,7 @@ Transform your GitHub contributions into an interactive galactic journey. See yo
 
 **3D Galaxy Visualization** — Your contributions become a living universe. Watch your commits light up as stars, see your repositories form constellations, and explore your language usage as colorful nebulae.
 
-**Achievement Badges** — Earn 15+ badges based on your coding habits. Are you a Night Owl or an Early Bird? A Streak Master or a PR Machine? Discover your developer identity.
+**Achievement Badges** — Earn 16 badges based on your coding habits. Are you a Night Owl or an Early Bird? A Streak Master or a PR Machine? Discover your developer identity.
 
 **Shareable Profiles** — Generate beautiful public profiles with custom OG images. Share your year in review on social media and flex your contribution stats.
 
