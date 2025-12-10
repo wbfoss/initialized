@@ -1,8 +1,8 @@
 'use client';
 
-import { Suspense, useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Stars as DreiStars, Float, Trail } from '@react-three/drei';
+import { Suspense, useMemo, useRef, useState } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { OrbitControls, PerspectiveCamera, Stars as DreiStars, Float, Trail, Html, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface DashboardSceneProps {
@@ -391,31 +391,253 @@ function ShootingStar() {
   );
 }
 
-function Scene({ totalContributions, monthlyData, repos }: DashboardSceneProps) {
+// Language nebula clouds with actual colors
+function LanguageNebulas({ languages }: { languages?: DashboardSceneProps['languages'] }) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = state.clock.elapsedTime * 0.015;
+    }
+  });
+
+  if (!languages || languages.length === 0) return null;
+
+  return (
+    <group ref={groupRef}>
+      {languages.slice(0, 6).map((lang, i) => {
+        const angle = (i / 6) * Math.PI * 2;
+        const distance = 18 + (i % 2) * 5;
+        const height = (seededRandom(i * 77) - 0.5) * 8;
+        const color = lang.color || '#f59e0b';
+        const scale = 0.5 + (lang.contributionShare / 100) * 2;
+
+        return (
+          <group key={lang.language} position={[Math.cos(angle) * distance, height, Math.sin(angle) * distance]}>
+            {/* Outer glow */}
+            <mesh scale={scale * 3}>
+              <sphereGeometry args={[1, 16, 16]} />
+              <meshBasicMaterial color={color} transparent opacity={0.03} />
+            </mesh>
+            {/* Middle cloud */}
+            <mesh scale={scale * 2}>
+              <sphereGeometry args={[1, 16, 16]} />
+              <meshBasicMaterial color={color} transparent opacity={0.06} />
+            </mesh>
+            {/* Core */}
+            <Float speed={1.5} floatIntensity={0.3}>
+              <mesh scale={scale}>
+                <sphereGeometry args={[1, 32, 32]} />
+                <meshStandardMaterial
+                  color={color}
+                  emissive={color}
+                  emissiveIntensity={0.3}
+                  transparent
+                  opacity={0.4}
+                />
+              </mesh>
+            </Float>
+            {/* Sparkles around language */}
+            <Sparkles count={20} scale={scale * 4} size={2} speed={0.4} color={color} />
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
+// Achievement constellation - floating badge stars
+function AchievementConstellation({ achievements }: { achievements?: DashboardSceneProps['achievements'] }) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = -state.clock.elapsedTime * 0.02;
+    }
+  });
+
+  if (!achievements || achievements.length === 0) return null;
+
+  const achievementColors: Record<string, string> = {
+    NIGHT_OWL: '#6366f1',
+    EARLY_BIRD: '#fbbf24',
+    STREAK_MASTER: '#ef4444',
+    CENTURY: '#10b981',
+    POLYGLOT: '#8b5cf6',
+    GALAXY_WANDERER: '#06b6d4',
+    TEAM_PLAYER: '#f59e0b',
+    CONSISTENT: '#22c55e',
+    THOUSAND_CLUB: '#f97316',
+    PR_MACHINE: '#3b82f6',
+    STAR_COLLECTOR: '#eab308',
+    BUG_HUNTER: '#dc2626',
+    OPEN_SOURCERER: '#14b8a6',
+    FIRST_CONTACT: '#a855f7',
+    WARP_SPEED: '#0ea5e9',
+    WEEKEND_WARRIOR: '#ec4899',
+  };
+
+  return (
+    <group ref={groupRef} position={[0, 8, 0]}>
+      {achievements.slice(0, 12).map((achievement, i) => {
+        const angle = (i / Math.min(achievements.length, 12)) * Math.PI * 2;
+        const radius = 14 + (i % 3) * 2;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const y = Math.sin(i * 1.5) * 3;
+        const color = achievementColors[achievement.code] || '#f59e0b';
+
+        return (
+          <Float key={achievement.code} speed={2} floatIntensity={0.5}>
+            <group position={[x, y, z]}>
+              {/* Star glow */}
+              <mesh scale={0.8}>
+                <octahedronGeometry args={[1]} />
+                <meshBasicMaterial color={color} transparent opacity={0.15} />
+              </mesh>
+              {/* Star core */}
+              <mesh scale={0.4} rotation={[0, i * 0.5, Math.PI / 4]}>
+                <octahedronGeometry args={[1]} />
+                <meshStandardMaterial
+                  color={color}
+                  emissive={color}
+                  emissiveIntensity={1}
+                  metalness={0.8}
+                  roughness={0.2}
+                />
+              </mesh>
+              <pointLight color={color} intensity={0.5} distance={5} />
+            </group>
+          </Float>
+        );
+      })}
+    </group>
+  );
+}
+
+// Warp speed lines effect
+function WarpLines() {
+  const linesRef = useRef<THREE.Points>(null);
+
+  const positions = useMemo(() => {
+    const count = 200;
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      const angle = seededRandom(i * 23) * Math.PI * 2;
+      const radius = 5 + seededRandom(i * 29) * 30;
+      pos[i * 3] = Math.cos(angle) * radius;
+      pos[i * 3 + 1] = (seededRandom(i * 31) - 0.5) * 40;
+      pos[i * 3 + 2] = Math.sin(angle) * radius;
+    }
+    return pos;
+  }, []);
+
+  useFrame((state) => {
+    if (linesRef.current) {
+      const positions = linesRef.current.geometry.attributes.position.array as Float32Array;
+      for (let i = 0; i < positions.length / 3; i++) {
+        positions[i * 3 + 2] += 0.3;
+        if (positions[i * 3 + 2] > 40) {
+          positions[i * 3 + 2] = -40;
+        }
+      }
+      linesRef.current.geometry.attributes.position.needsUpdate = true;
+    }
+  });
+
+  return (
+    <points ref={linesRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial size={0.08} color="#22d3ee" transparent opacity={0.3} sizeAttenuation />
+    </points>
+  );
+}
+
+// Pulsing energy rings around central star
+function EnergyRings({ contributions }: { contributions: number }) {
+  const ring1Ref = useRef<THREE.Mesh>(null);
+  const ring2Ref = useRef<THREE.Mesh>(null);
+  const ring3Ref = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    if (ring1Ref.current) {
+      ring1Ref.current.rotation.x = t * 0.5;
+      ring1Ref.current.rotation.y = t * 0.3;
+      const scale = 3 + Math.sin(t * 2) * 0.3;
+      ring1Ref.current.scale.setScalar(scale);
+    }
+    if (ring2Ref.current) {
+      ring2Ref.current.rotation.x = -t * 0.4;
+      ring2Ref.current.rotation.z = t * 0.2;
+      const scale = 4 + Math.sin(t * 1.5 + 1) * 0.4;
+      ring2Ref.current.scale.setScalar(scale);
+    }
+    if (ring3Ref.current) {
+      ring3Ref.current.rotation.y = t * 0.3;
+      ring3Ref.current.rotation.z = -t * 0.25;
+      const scale = 5 + Math.sin(t * 1.2 + 2) * 0.5;
+      ring3Ref.current.scale.setScalar(scale);
+    }
+  });
+
+  return (
+    <group>
+      <mesh ref={ring1Ref}>
+        <torusGeometry args={[1, 0.02, 16, 100]} />
+        <meshBasicMaterial color="#f59e0b" transparent opacity={0.4} />
+      </mesh>
+      <mesh ref={ring2Ref}>
+        <torusGeometry args={[1, 0.015, 16, 100]} />
+        <meshBasicMaterial color="#22d3ee" transparent opacity={0.3} />
+      </mesh>
+      <mesh ref={ring3Ref}>
+        <torusGeometry args={[1, 0.01, 16, 100]} />
+        <meshBasicMaterial color="#9370db" transparent opacity={0.2} />
+      </mesh>
+    </group>
+  );
+}
+
+function Scene({ totalContributions, monthlyData, repos, languages, achievements }: DashboardSceneProps) {
   return (
     <>
       {/* Ambient lighting */}
-      <ambientLight intensity={0.1} />
+      <ambientLight intensity={0.15} />
 
       {/* Nebula background clouds */}
       <NebulaCloud position={[-40, 20, -60]} color="#7c3aed" scale={3} />
       <NebulaCloud position={[50, -10, -50]} color="#0ea5e9" scale={2.5} />
       <NebulaCloud position={[0, 30, -70]} color="#f97316" scale={2} />
       <NebulaCloud position={[-30, -20, -40]} color="#ec4899" scale={1.5} />
+      <NebulaCloud position={[30, 15, -55]} color="#22d3ee" scale={2} />
 
-      {/* Central star */}
+      {/* Central star with energy rings */}
       <CentralStar contributions={totalContributions} />
+      <EnergyRings contributions={totalContributions} />
 
       {/* Multiple orbit rings */}
       <GlowingOrbit radius={5} color="#f97316" speed={1.2} />
       <GlowingOrbit radius={8} color="#38bdf8" speed={0.8} />
       <GlowingOrbit radius={11} color="#a78bfa" speed={0.5} />
+      <GlowingOrbit radius={15} color="#22d3ee" speed={0.3} />
 
       {/* Activity nodes */}
       <ActivityNodes monthlyData={monthlyData} radius={8} />
 
       {/* Repository crystals */}
       <RepoCrystals repos={repos} />
+
+      {/* Language nebulas */}
+      <LanguageNebulas languages={languages} />
+
+      {/* Achievement constellation */}
+      <AchievementConstellation achievements={achievements} />
+
+      {/* Warp lines effect */}
+      <WarpLines />
 
       {/* Ambient dust */}
       <SpaceDust />
@@ -424,17 +646,25 @@ function Scene({ totalContributions, monthlyData, repos }: DashboardSceneProps) 
       <ShootingStar />
       <ShootingStar />
       <ShootingStar />
+      <ShootingStar />
+      <ShootingStar />
 
-      {/* Camera controls */}
+      {/* Global sparkles */}
+      <Sparkles count={100} scale={50} size={1} speed={0.2} color="#ffffff" opacity={0.3} />
+
+      {/* Camera controls - more interactive */}
       <OrbitControls
         enableZoom={true}
-        enablePan={false}
+        enablePan={true}
         autoRotate
-        autoRotateSpeed={0.3}
-        maxPolarAngle={Math.PI / 1.8}
-        minPolarAngle={Math.PI / 4}
-        maxDistance={40}
-        minDistance={15}
+        autoRotateSpeed={0.2}
+        maxPolarAngle={Math.PI / 1.5}
+        minPolarAngle={Math.PI / 6}
+        maxDistance={50}
+        minDistance={10}
+        panSpeed={0.5}
+        rotateSpeed={0.5}
+        zoomSpeed={0.8}
       />
     </>
   );

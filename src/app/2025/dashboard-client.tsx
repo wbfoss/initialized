@@ -485,13 +485,13 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          CENTER MAIN DISPLAY
+          CENTER MAIN DISPLAY - Minimal overlay to show more galaxy
           ═══════════════════════════════════════════════════════════════════ */}
-      <div className="absolute left-64 right-64 top-[96px] bottom-[96px] z-10 flex flex-col p-4">
-        {/* Main Stats Display */}
-        <div className="flex-1 flex flex-col items-center justify-center">
+      <div className="absolute left-64 right-64 top-[96px] bottom-[96px] z-10 flex flex-col pointer-events-none">
+        {/* Top: Transmission Header + Big Number */}
+        <div className="flex flex-col items-center pt-4 pointer-events-auto">
           {/* Transmission Header */}
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 mb-4">
             <div className="flex gap-1">
               {[...Array(5)].map((_, i) => (
                 <div
@@ -501,8 +501,8 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
                 />
               ))}
             </div>
-            <Radio className="h-5 w-5 text-[#22d3ee] animate-pulse" />
-            <span className="text-[#22d3ee] uppercase tracking-[0.4em] text-xs">Mission Report Active</span>
+            <Radio className="h-4 w-4 text-[#22d3ee] animate-pulse" />
+            <span className="text-[#22d3ee] uppercase tracking-[0.3em] text-[10px]">Mission Report Active</span>
             <div className="flex gap-1">
               {[...Array(5)].map((_, i) => (
                 <div
@@ -514,29 +514,40 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
             </div>
           </div>
 
-          {/* Big Number Display */}
-          <div className="text-center mb-8">
-            <div className="text-[120px] font-bold text-[#f59e0b] leading-none tabular-nums tracking-tight">
+          {/* Big Number Display - More transparent */}
+          <div className="text-center">
+            <div
+              className="text-[100px] font-bold leading-none tabular-nums tracking-tight"
+              style={{
+                color: '#f59e0b',
+                textShadow: '0 0 40px rgba(245, 158, 11, 0.5), 0 0 80px rgba(245, 158, 11, 0.3)'
+              }}
+            >
               {(summary?.totalContributions || 0).toLocaleString()}
             </div>
-            <div className="text-[#9370db] uppercase tracking-[0.5em] text-sm mt-2">
+            <div className="text-[#9370db] uppercase tracking-[0.5em] text-xs mt-1">
               Total Contributions
             </div>
           </div>
+        </div>
 
-          {/* Contribution Graph */}
-          <div className="w-full max-w-2xl">
-            <div className="bg-black/60 border-2 border-[#f59e0b]/30 rounded-lg p-4">
-              <div className="text-[10px] text-[#f59e0b] uppercase tracking-widest mb-3">
-                Contribution Frequency Analysis
+        {/* Spacer - lets the galaxy show through */}
+        <div className="flex-1" />
+
+        {/* Bottom: Contribution Graph - Compact */}
+        <div className="flex justify-center pb-4 pointer-events-auto">
+          <div className="w-full max-w-md">
+            <div className="bg-black/40 backdrop-blur-sm border border-[#f59e0b]/20 rounded-lg p-3">
+              <div className="text-[9px] text-[#f59e0b] uppercase tracking-widest mb-2">
+                Contribution Frequency
               </div>
-              <div className="flex items-end justify-between gap-1" style={{ height: '96px' }}>
+              <div className="flex items-end justify-between gap-[2px]" style={{ height: '48px' }}>
                 {(summary?.contributionsByMonth || Array(12).fill({ count: 0 })).map((m, i) => {
                   const monthlyData = summary?.contributionsByMonth || [];
                   const maxCount = monthlyData.length > 0
                     ? Math.max(...monthlyData.map(x => x.count), 1)
                     : 1;
-                  const barHeight = maxCount > 0 ? Math.max(8, (m.count / maxCount) * 80) : 8;
+                  const barHeight = maxCount > 0 ? Math.max(4, (m.count / maxCount) * 40) : 4;
                   return (
                     <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
                       <div
@@ -544,10 +555,10 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
                         style={{
                           height: `${barHeight}px`,
                           backgroundColor: i % 2 === 0 ? '#f59e0b' : '#9370db',
-                          minHeight: '8px'
+                          minHeight: '4px'
                         }}
                       />
-                      <span className="text-[8px] text-[#ffebb8]/50 mt-1">
+                      <span className="text-[7px] text-[#ffebb8]/40 mt-0.5">
                         {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][i]}
                       </span>
                     </div>
@@ -556,6 +567,13 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Interactive hint */}
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 text-[9px] text-[#22d3ee]/50 uppercase tracking-widest flex items-center gap-2 pointer-events-none">
+          <span>Drag to explore</span>
+          <span className="text-[#f59e0b]/50">•</span>
+          <span>Scroll to zoom</span>
         </div>
       </div>
 
