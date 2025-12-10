@@ -160,6 +160,112 @@ export async function fetchUserOwnedOrgs(token: string): Promise<string[]> {
   }
 }
 
+// Fetch total stars from ALL repos owned by user (personal + org repos where user is admin)
+export async function fetchTotalOwnedRepoStars(
+  token: string,
+  username: string,
+  ownedOrgs: string[]
+): Promise<number> {
+  let totalStars = 0;
+
+  // 1. Fetch stars from user's personal repos
+  const personalReposQuery = `
+    query($username: String!, $first: Int!, $after: String) {
+      user(login: $username) {
+        repositories(first: $first, after: $after, ownerAffiliations: OWNER) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            stargazerCount
+          }
+        }
+      }
+    }
+  `;
+
+  interface PersonalReposResponse {
+    user: {
+      repositories: {
+        pageInfo: { hasNextPage: boolean; endCursor: string };
+        nodes: Array<{ stargazerCount: number }>;
+      };
+    };
+  }
+
+  let hasMore = true;
+  let cursor: string | null = null;
+
+  while (hasMore) {
+    const data: PersonalReposResponse = await githubGraphQL<PersonalReposResponse>(
+      personalReposQuery,
+      token,
+      { username, first: 100, after: cursor }
+    );
+
+    for (const repo of data.user.repositories.nodes) {
+      totalStars += repo.stargazerCount;
+    }
+
+    hasMore = data.user.repositories.pageInfo.hasNextPage;
+    cursor = data.user.repositories.pageInfo.endCursor;
+  }
+
+  // 2. Fetch stars from org repos where user is admin
+  interface OrgReposResponse {
+    organization: {
+      repositories: {
+        pageInfo: { hasNextPage: boolean; endCursor: string };
+        nodes: Array<{ stargazerCount: number }>;
+      };
+    };
+  }
+
+  for (const orgLogin of ownedOrgs) {
+    const orgReposQuery = `
+      query($orgLogin: String!, $first: Int!, $after: String) {
+        organization(login: $orgLogin) {
+          repositories(first: $first, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              stargazerCount
+            }
+          }
+        }
+      }
+    `;
+
+    let orgHasMore = true;
+    let orgCursor: string | null = null;
+
+    while (orgHasMore) {
+      try {
+        const orgData: OrgReposResponse = await githubGraphQL<OrgReposResponse>(
+          orgReposQuery,
+          token,
+          { orgLogin, first: 100, after: orgCursor }
+        );
+
+        for (const repo of orgData.organization.repositories.nodes) {
+          totalStars += repo.stargazerCount;
+        }
+
+        orgHasMore = orgData.organization.repositories.pageInfo.hasNextPage;
+        orgCursor = orgData.organization.repositories.pageInfo.endCursor;
+      } catch (error) {
+        console.error(`Error fetching org repos for ${orgLogin}:`, error);
+        break;
+      }
+    }
+  }
+
+  return totalStars;
+}
+
 // Fetch user core profile
 export async function fetchUserCoreProfile(token: string): Promise<UserCoreProfile> {
   const user = await githubRest<{
@@ -544,8 +650,9 @@ export function computeAggregatedYearStats(raw: {
   contributions: ContributionData;
   repos: RepoContributionData[];
   collaborators: CollaboratorData[];
+  totalOwnedStars: number; // Total stars from ALL owned repos (personal + org)
 }): AggregatedStats & { commitTimestamps: string[] } {
-  const { contributions, repos, collaborators } = raw;
+  const { contributions, repos, collaborators, totalOwnedStars } = raw;
 
   // Calculate contributions by month
   const contributionsByMonth: { month: number; count: number }[] = Array.from(
@@ -636,17 +743,12 @@ export function computeAggregatedYearStats(raw: {
     else repo.role = 'SHUTTLE';
   });
 
-  // Only count stars from repos the user owns
-  const ownedReposStars = repos
-    .filter((r) => r.isOwner)
-    .reduce((sum, r) => sum + r.stargazersCount, 0);
-
   return {
     totalContributions: contributions.totalContributions,
     totalCommits: contributions.totalCommitContributions,
     totalPRs: contributions.totalPullRequestContributions,
     totalIssues: contributions.totalIssueContributions,
-    totalStarsEarned: ownedReposStars,
+    totalStarsEarned: totalOwnedStars, // Use accurate count from ALL owned repos
     contributionsByMonth,
     topLanguages,
     topRepos: sortedRepos.slice(0, 10),

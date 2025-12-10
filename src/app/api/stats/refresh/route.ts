@@ -7,6 +7,7 @@ import {
   fetchUserReposForYear,
   fetchCollaboratorsForYear,
   fetchUserOwnedOrgs,
+  fetchTotalOwnedRepoStars,
   computeAggregatedYearStats,
   calculateAchievements,
   ACHIEVEMENTS,
@@ -80,17 +81,18 @@ export async function POST(request: Request) {
     const includePrivate = user.settings[0]?.includePrivateRepos || false;
 
     // Fetch data from GitHub with individual error handling
-    let profile, contributions, repos, collaborators, ownedOrgs;
+    let profile, contributions, repos, collaborators, ownedOrgs, totalOwnedStars;
     try {
-      // First, fetch owned orgs (needed for repo ownership check)
+      // First, fetch owned orgs (needed for repo ownership check and star count)
       ownedOrgs = await fetchUserOwnedOrgs(account.accessToken);
 
       // Then fetch all other data in parallel
-      [profile, contributions, repos, collaborators] = await Promise.all([
+      [profile, contributions, repos, collaborators, totalOwnedStars] = await Promise.all([
         fetchUserCoreProfile(account.accessToken),
         fetchUserContributionsForYear(account.accessToken, user.username, year),
         fetchUserReposForYear(account.accessToken, user.username, year, includePrivate, ownedOrgs),
         fetchCollaboratorsForYear(account.accessToken, user.username, year),
+        fetchTotalOwnedRepoStars(account.accessToken, user.username, ownedOrgs),
       ]);
     } catch (githubError) {
       console.error('GitHub API error:', githubError);
@@ -106,6 +108,7 @@ export async function POST(request: Request) {
       contributions,
       repos,
       collaborators,
+      totalOwnedStars,
     });
 
     // Calculate achievements
