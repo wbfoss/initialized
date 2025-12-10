@@ -30,6 +30,7 @@ import {
   Twitter,
   Linkedin,
   Copy,
+  HelpCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -404,11 +405,20 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
               <span className="text-black text-[11px] font-bold tracking-widest">COMMENDATIONS</span>
               <span className="text-black/60 text-[9px] font-bold">{achievements.length}</span>
             </div>
-            <div className="p-3 space-y-2 max-h-40 overflow-y-auto">
-              {achievements.length > 0 ? achievements.slice(0, 5).map((a) => (
-                <div key={a.code} className="flex items-center gap-2 p-2 bg-[#9370db]/10 border border-[#9370db]/30 rounded">
+            <div className="p-3 space-y-2 max-h-48 overflow-y-auto">
+              {achievements.length > 0 ? achievements.map((a) => (
+                <div key={a.code} className="group relative flex items-center gap-2 p-2 bg-[#9370db]/10 border border-[#9370db]/30 rounded hover:bg-[#9370db]/20 transition-colors">
                   <Trophy className="h-3 w-3 text-[#f59e0b] flex-shrink-0" />
-                  <span className="text-[10px] text-[#ffebb8] truncate">{a.name}</span>
+                  <span className="text-[9px] text-[#ffebb8] truncate flex-1">{a.name}</span>
+                  <div className="relative">
+                    <HelpCircle className="h-3 w-3 text-[#9370db]/50 hover:text-[#9370db] cursor-help" />
+                    {/* Tooltip */}
+                    <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-black/95 border border-[#9370db]/50 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+                      <div className="text-[#f59e0b] text-[8px] font-bold tracking-wider mb-1">{a.name}</div>
+                      <div className="text-[#ffebb8]/80 text-[8px] leading-relaxed">{a.description}</div>
+                      <div className="absolute -bottom-1 right-3 w-2 h-2 bg-black/95 border-r border-b border-[#9370db]/50 transform rotate-45" />
+                    </div>
+                  </div>
                 </div>
               )) : (
                 <div className="text-[10px] text-[#9370db]/50 italic text-center py-4">NO COMMENDATIONS LOGGED</div>
@@ -758,7 +768,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
                 </div>
 
                 {/* Center - info */}
-                <div className="flex-1 space-y-3">
+                <div className="flex-1 space-y-2">
                   <div>
                     <div className="text-[#f59e0b] text-[9px] tracking-widest">NAME:</div>
                     <div className="text-white text-lg font-bold">{user.name || user.username}</div>
@@ -782,9 +792,23 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
                     <div className="text-white text-sm">GitHub Yearbook 2025</div>
                   </div>
                   <div>
-                    <div className="text-[#f59e0b] text-[9px] tracking-widest">CONTRIBUTIONS:</div>
-                    <div className="text-[#22d3ee] text-2xl font-bold tabular-nums">
-                      {(summary?.totalContributions || 0).toLocaleString()}
+                    <div className="text-[#f59e0b] text-[9px] tracking-widest mb-1">COMMENDATIONS ({achievements.length}):</div>
+                    <div className="flex flex-wrap gap-1">
+                      {achievements.length > 0 ? achievements.slice(0, 6).map((a) => (
+                        <span
+                          key={a.code}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#9370db]/20 border border-[#9370db]/40 rounded text-[8px] text-[#ffebb8]"
+                          title={a.description}
+                        >
+                          <Trophy className="h-2 w-2 text-[#f59e0b]" />
+                          {a.name}
+                        </span>
+                      )) : (
+                        <span className="text-[#9370db]/50 text-[9px] italic">None earned yet</span>
+                      )}
+                      {achievements.length > 6 && (
+                        <span className="text-[#9370db] text-[8px]">+{achievements.length - 6} more</span>
+                      )}
                     </div>
                   </div>
                 </div>
