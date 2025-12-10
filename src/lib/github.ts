@@ -69,11 +69,13 @@ export interface AggregatedStats {
   contributionsByMonth: { month: number; count: number }[];
   topLanguages: { language: string; percentage: number; color: string | null }[];
   topRepos: RepoContributionData[];
+  totalReposContributed: number; // Total number of repos contributed to (not limited to top 10)
   collaborators: CollaboratorData[];
   longestStreak: number;
   currentStreak: number;
   mostActiveDay: string;
   mostActiveHour: number;
+  maxWeeklyContributions: number; // Maximum contributions in any single week
 }
 
 // Helper for REST API calls
@@ -350,24 +352,31 @@ export async function fetchUserContributionsForYear(
           };
         }>;
       };
-    };
+    } | null;
   }>(query, token, { username, from, to });
+
+  // Handle null user (user doesn't exist or is deleted)
+  if (!data.user) {
+    throw new Error(`GitHub user '${username}' not found`);
+  }
+
+  const collection = data.user.contributionsCollection;
 
   // Extract commit timestamps for hour analysis
   const commitTimestamps: string[] = [];
-  for (const repo of data.user.contributionsCollection.commitContributionsByRepository) {
-    for (const commit of repo.contributions.nodes) {
+  for (const repo of collection.commitContributionsByRepository ?? []) {
+    for (const commit of repo.contributions?.nodes ?? []) {
       commitTimestamps.push(commit.occurredAt);
     }
   }
 
   return {
-    totalContributions: data.user.contributionsCollection.contributionCalendar.totalContributions,
-    weeks: data.user.contributionsCollection.contributionCalendar.weeks,
-    restrictedContributionsCount: data.user.contributionsCollection.restrictedContributionsCount,
-    totalCommitContributions: data.user.contributionsCollection.totalCommitContributions,
-    totalPullRequestContributions: data.user.contributionsCollection.totalPullRequestContributions,
-    totalIssueContributions: data.user.contributionsCollection.totalIssueContributions,
+    totalContributions: collection.contributionCalendar.totalContributions,
+    weeks: collection.contributionCalendar.weeks ?? [],
+    restrictedContributionsCount: collection.restrictedContributionsCount,
+    totalCommitContributions: collection.totalCommitContributions,
+    totalPullRequestContributions: collection.totalPullRequestContributions,
+    totalIssueContributions: collection.totalIssueContributions,
     commitTimestamps,
   };
 }
@@ -444,7 +453,7 @@ export async function fetchUserReposForYear(
           forkCount: number;
         }>;
       };
-    };
+    } | null;
   }
 
   const repos: RepoContributionData[] = [];
@@ -457,6 +466,11 @@ export async function fetchUserReposForYear(
       first: 50,
       after: cursor,
     });
+
+    // Handle null user
+    if (!result.user) {
+      throw new Error(`GitHub user '${username}' not found`);
+    }
 
     const repoData = result.user.repositoriesContributedTo;
 
@@ -578,13 +592,19 @@ export async function fetchCollaboratorsForYear(
           }>;
         };
       };
-    };
+    } | null;
   }>(query, token, { username, from, to });
 
+  // Handle null user
+  if (!data.user) {
+    throw new Error(`GitHub user '${username}' not found`);
+  }
+
   const collaboratorMap = new Map<string, CollaboratorData>();
+  const collection = data.user.contributionsCollection;
 
   // Process PR contributors
-  for (const pr of data.user.contributionsCollection.pullRequestContributions.nodes) {
+  for (const pr of collection.pullRequestContributions?.nodes ?? []) {
     if (pr.pullRequest.author && pr.pullRequest.author.login !== username) {
       const login = pr.pullRequest.author.login;
       const existing = collaboratorMap.get(login);
@@ -600,7 +620,7 @@ export async function fetchCollaboratorsForYear(
       }
     }
 
-    for (const review of pr.pullRequest.reviews.nodes) {
+    for (const review of pr.pullRequest.reviews?.nodes ?? []) {
       if (review.author && review.author.login !== username) {
         const login = review.author.login;
         const existing = collaboratorMap.get(login);
@@ -619,8 +639,8 @@ export async function fetchCollaboratorsForYear(
   }
 
   // Process issue participants
-  for (const issue of data.user.contributionsCollection.issueContributions.nodes) {
-    for (const participant of issue.issue.participants.nodes) {
+  for (const issue of collection.issueContributions?.nodes ?? []) {
+    for (const participant of issue.issue.participants?.nodes ?? []) {
       if (participant.login !== username) {
         const login = participant.login;
         const existing = collaboratorMap.get(login);
@@ -665,6 +685,13 @@ export function computeAggregatedYearStats(raw: {
       const month = new Date(day.date).getMonth();
       contributionsByMonth[month].count += day.contributionCount;
     }
+  }
+
+  // Calculate max weekly contributions
+  let maxWeeklyContributions = 0;
+  for (const week of contributions.weeks) {
+    const weekTotal = week.contributionDays.reduce((sum, day) => sum + day.contributionCount, 0);
+    maxWeeklyContributions = Math.max(maxWeeklyContributions, weekTotal);
   }
 
   // Calculate streaks
@@ -752,11 +779,13 @@ export function computeAggregatedYearStats(raw: {
     contributionsByMonth,
     topLanguages,
     topRepos: sortedRepos.slice(0, 10),
+    totalReposContributed: repos.length, // Full count before slicing
     collaborators,
     longestStreak,
     currentStreak,
     mostActiveDay,
     mostActiveHour,
+    maxWeeklyContributions,
     commitTimestamps: contributions.commitTimestamps,
   };
 }
@@ -832,7 +861,7 @@ export const ACHIEVEMENTS: AchievementCheck[] = [
     name: 'Galaxy Wanderer',
     description: 'Contributed to 10+ repositories',
     icon: 'rocket',
-    check: (stats) => stats.topRepos.length >= 10,
+    check: (stats) => (stats.totalReposContributed ?? stats.topRepos.length) >= 10,
   },
   {
     code: 'TEAM_PLAYER',
@@ -895,12 +924,7 @@ export const ACHIEVEMENTS: AchievementCheck[] = [
     name: 'Warp Speed',
     description: 'Made 50+ contributions in a single week',
     icon: 'zap',
-    check: (stats) => {
-      // Check if any 7-day window has 50+ contributions
-      const days = stats.contributionsByMonth.reduce((sum, m) => sum + m.count, 0);
-      // Simplified check: if average weekly is high enough
-      return days >= 50 * 4; // At least 200 contributions suggests high weekly activity
-    },
+    check: (stats) => (stats.maxWeeklyContributions ?? 0) >= 50,
   },
   {
     code: 'WEEKEND_WARRIOR',
