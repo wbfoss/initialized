@@ -82,24 +82,66 @@ export async function POST(request: Request) {
 
     // Fetch data from GitHub with individual error handling
     let profile, contributions, repos, collaborators, ownedOrgs, totalOwnedStars;
+
     try {
       // First, fetch owned orgs (needed for repo ownership check and star count)
+      console.log('Fetching owned orgs...');
       ownedOrgs = await fetchUserOwnedOrgs(account.accessToken);
+      console.log('Owned orgs fetched:', ownedOrgs.length);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to fetch owned orgs:', msg);
+      return NextResponse.json({ error: `Failed to fetch orgs: ${msg}` }, { status: 502 });
+    }
 
-      // Then fetch all other data in parallel
-      [profile, contributions, repos, collaborators, totalOwnedStars] = await Promise.all([
-        fetchUserCoreProfile(account.accessToken),
-        fetchUserContributionsForYear(account.accessToken, user.username, year),
-        fetchUserReposForYear(account.accessToken, user.username, year, includePrivate, ownedOrgs),
-        fetchCollaboratorsForYear(account.accessToken, user.username, year),
-        fetchTotalOwnedRepoStars(account.accessToken, user.username, ownedOrgs),
-      ]);
-    } catch (githubError) {
-      console.error('GitHub API error:', githubError);
-      return NextResponse.json(
-        { error: 'Failed to fetch data from GitHub. Please try again.' },
-        { status: 502 }
-      );
+    try {
+      console.log('Fetching profile...');
+      profile = await fetchUserCoreProfile(account.accessToken);
+      console.log('Profile fetched:', profile.login);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to fetch profile:', msg);
+      return NextResponse.json({ error: `Failed to fetch profile: ${msg}` }, { status: 502 });
+    }
+
+    try {
+      console.log('Fetching contributions...');
+      contributions = await fetchUserContributionsForYear(account.accessToken, user.username, year);
+      console.log('Contributions fetched:', contributions.totalContributions);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to fetch contributions:', msg);
+      return NextResponse.json({ error: `Failed to fetch contributions: ${msg}` }, { status: 502 });
+    }
+
+    try {
+      console.log('Fetching repos...');
+      repos = await fetchUserReposForYear(account.accessToken, user.username, year, includePrivate, ownedOrgs);
+      console.log('Repos fetched:', repos.length);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to fetch repos:', msg);
+      return NextResponse.json({ error: `Failed to fetch repos: ${msg}` }, { status: 502 });
+    }
+
+    try {
+      console.log('Fetching collaborators...');
+      collaborators = await fetchCollaboratorsForYear(account.accessToken, user.username, year);
+      console.log('Collaborators fetched:', collaborators.length);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to fetch collaborators:', msg);
+      return NextResponse.json({ error: `Failed to fetch collaborators: ${msg}` }, { status: 502 });
+    }
+
+    try {
+      console.log('Fetching total stars...');
+      totalOwnedStars = await fetchTotalOwnedRepoStars(account.accessToken, user.username, ownedOrgs);
+      console.log('Total stars fetched:', totalOwnedStars);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to fetch stars:', msg);
+      return NextResponse.json({ error: `Failed to fetch stars: ${msg}` }, { status: 502 });
     }
 
     // Compute aggregated stats
