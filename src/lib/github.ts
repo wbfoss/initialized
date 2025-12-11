@@ -577,7 +577,7 @@ export async function fetchUserReposForYear(
     cursor = repoData.pageInfo?.endCursor || null;
 
     // Limit to avoid rate limits
-    if (repos.length >= 100) break;
+    if (repos.length >= APP_CONFIG.MAX_REPOS_TO_FETCH) break;
   }
 
   return repos;
@@ -729,10 +729,10 @@ export async function fetchCollaboratorsForYear(
     }
   }
 
-  // Sort by interaction score and return top 20
+  // Sort by interaction score and return top collaborators
   return Array.from(collaboratorMap.values())
     .sort((a, b) => b.interactionScore - a.interactionScore)
-    .slice(0, 20);
+    .slice(0, APP_CONFIG.MAX_COLLABORATORS_TO_RETURN);
 }
 
 // Compute aggregated stats from raw data
@@ -831,7 +831,7 @@ export function computeAggregatedYearStats(raw: {
       color: data.color,
     }))
     .sort((a, b) => b.percentage - a.percentage)
-    .slice(0, 10);
+    .slice(0, APP_CONFIG.TOP_LANGUAGES_LIMIT);
 
   // Assign repo roles based on stars (since we use GitHub's contribution data for commits)
   const sortedRepos = [...repos].sort((a, b) => b.stargazersCount - a.stargazersCount);
@@ -849,7 +849,7 @@ export function computeAggregatedYearStats(raw: {
     totalStarsEarned: totalOwnedStars, // Use accurate count from ALL owned repos
     contributionsByMonth,
     topLanguages,
-    topRepos: sortedRepos.slice(0, 10),
+    topRepos: sortedRepos.slice(0, APP_CONFIG.TOP_REPOS_LIMIT),
     totalReposContributed: repos.length, // Full count before slicing
     collaborators,
     longestStreak,

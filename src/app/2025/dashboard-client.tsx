@@ -26,7 +26,6 @@ import {
   Globe,
   IdCard,
   X,
-  Download,
   Twitter,
   Linkedin,
   Copy,
@@ -35,6 +34,7 @@ import {
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { calculateClearanceLevel } from '@/lib/github';
+import { APP_CONFIG } from '@/lib/config';
 
 const DashboardScene = dynamic(
   () => import('@/components/three/DashboardScene').then((mod) => mod.DashboardScene),
@@ -97,7 +97,7 @@ interface SummaryStats {
 export function DashboardClient({ user, yearStats, achievements }: DashboardProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [, setIsFullscreen] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -117,7 +117,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
   }), [user.githubCreatedAt, summary]);
 
   // Check if we're viewing a past year's stats (show "see you next year" banner)
-  const YEARBOOK_YEAR = 2025;
+  const YEARBOOK_YEAR = APP_CONFIG.CURRENT_YEAR;
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth(); // 0-indexed (0 = January, 11 = December)
@@ -148,7 +148,7 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
       const response = await fetch('/api/stats/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year: 2025 }),
+        body: JSON.stringify({ year: APP_CONFIG.CURRENT_YEAR }),
       });
 
       if (!response.ok) {
@@ -166,7 +166,8 @@ export function DashboardClient({ user, yearStats, achievements }: DashboardProp
   };
 
   const copyShareLink = () => {
-    navigator.clipboard.writeText(`https://initialized.dev/u/${user.username}/2025`);
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://initialized.dev';
+    navigator.clipboard.writeText(`${baseUrl}/u/${user.username}/${APP_CONFIG.CURRENT_YEAR}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

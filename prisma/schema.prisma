@@ -137,6 +137,7 @@ model ProfileSettings {
   updatedAt            DateTime @updatedAt
 
   @@unique([userId, year])
+  @@index([userId])
 }
 
 model AnalyticsEvent {

@@ -1,6 +1,8 @@
 // Simple rate limiting for API routes
 // For production with high traffic, consider using Redis or Vercel KV
 
+import { APP_CONFIG } from './config';
+
 interface RateLimitEntry {
   count: number;
   resetAt: number;
@@ -104,26 +106,26 @@ export function getRateLimitHeaders(result: RateLimitResult): Record<string, str
   };
 }
 
-// Default configs for different endpoints
+// Default configs for different endpoints - sourced from centralized config
 export const RATE_LIMITS = {
   // Stats refresh - expensive operation, limit to 5 per hour
   statsRefresh: {
-    maxRequests: 5,
-    windowMs: 60 * 60 * 1000, // 1 hour
+    maxRequests: APP_CONFIG.RATE_LIMITS.STATS_REFRESH_MAX,
+    windowMs: APP_CONFIG.RATE_LIMITS.STATS_REFRESH_WINDOW_MS,
   },
   // Settings update - moderate limit
   settings: {
-    maxRequests: 20,
-    windowMs: 60 * 1000, // 1 minute
+    maxRequests: APP_CONFIG.RATE_LIMITS.SETTINGS_MAX,
+    windowMs: APP_CONFIG.RATE_LIMITS.SETTINGS_WINDOW_MS,
   },
   // General API - higher limit
   general: {
-    maxRequests: 100,
-    windowMs: 60 * 1000, // 1 minute
+    maxRequests: APP_CONFIG.RATE_LIMITS.GENERAL_MAX,
+    windowMs: APP_CONFIG.RATE_LIMITS.GENERAL_WINDOW_MS,
   },
   // Public profile API - prevent scraping
   publicProfile: {
-    maxRequests: 30,
-    windowMs: 60 * 1000, // 1 minute
+    maxRequests: APP_CONFIG.RATE_LIMITS.PUBLIC_PROFILE_MAX,
+    windowMs: APP_CONFIG.RATE_LIMITS.PUBLIC_PROFILE_WINDOW_MS,
   },
 } as const;

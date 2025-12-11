@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { decrypt, isEncrypted } from '@/lib/crypto';
-import { APP_CONFIG } from '@/lib/config';
 import {
   fetchUserCoreProfile,
   fetchUserContributionsForYear,
